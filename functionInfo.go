@@ -1,6 +1,6 @@
 package hydra
 
-type FunctionInfo interface{
+type FunctionInfo interface {
 	Name() string
 	Function() func(SetupFunction)
 	Parent() string
@@ -9,46 +9,46 @@ type FunctionInfo interface{
 	WriteChan() chan WriteOnlyChannel
 }
 
-type functionInfo struct{
-	name string
-	f func(SetupFunction)
-	parent string
-	funcType FunctionType
-	readChan chan ReadOnlyChannel
+type functionInfo struct {
+	name      string
+	f         func(SetupFunction)
+	parent    string
+	funcType  FunctionType
+	readChan  chan ReadOnlyChannel
 	writeChan chan WriteOnlyChannel
 }
 
-func NewFunctionInfo(name string, f func(SetupFunction), parent string, funcType FunctionType) FunctionInfo{
+func NewFunctionInfo(name string, f func(SetupFunction), parent string, funcType FunctionType) FunctionInfo {
 	return &functionInfo{
-		name : name,
-		f : f,
-		parent : parent,
-		funcType : funcType,
-		readChan : make(chan ReadOnlyChannel),
-		writeChan : make(chan WriteOnlyChannel),
+		name:      name,
+		f:         f,
+		parent:    parent,
+		funcType:  funcType,
+		readChan:  make(chan ReadOnlyChannel),
+		writeChan: make(chan WriteOnlyChannel),
 	}
 }
 
-func (f *functionInfo) Name() string{
+func (f *functionInfo) Name() string {
 	return f.name
 }
 
-func (f *functionInfo) Function() func(SetupFunction){
+func (f *functionInfo) Function() func(SetupFunction) {
 	return f.f
 }
 
-func (f *functionInfo) Parent() string{
+func (f *functionInfo) Parent() string {
 	return f.parent
 }
 
-func (f *functionInfo) FuncType() FunctionType{
+func (f *functionInfo) FuncType() FunctionType {
 	return f.funcType
 }
 
-func (f *functionInfo) ReadChan() chan ReadOnlyChannel{
+func (f *functionInfo) ReadChan() chan ReadOnlyChannel {
 	return f.readChan
 }
 
-func (f *functionInfo) WriteChan() chan WriteOnlyChannel{
+func (f *functionInfo) WriteChan() chan WriteOnlyChannel {
 	return f.writeChan
 }

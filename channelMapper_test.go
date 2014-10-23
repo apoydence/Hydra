@@ -6,16 +6,16 @@ import (
 )
 
 var _ = Describe("ChannelMapper", func() {
-	Context("With a linear path", func(){
-		var(
-			m map[string] Mapper
+	Context("With a linear path", func() {
+		var (
+			m map[string]Mapper
 		)
 
-		BeforeEach(func(){
-			m = make(map[string] Mapper)
+		BeforeEach(func() {
+			m = make(map[string]Mapper)
 		})
 
-		It("passes the same channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done){
+		It("passes the same channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
 			defer close(done)
 
 			a := NewFunctionInfo("a", nil, "", PRODUCER)
@@ -30,16 +30,16 @@ var _ = Describe("ChannelMapper", func() {
 		}, 1)
 	})
 
-	Context("With a non-linear path", func(){
-		var(
-			m map[string] Mapper
+	Context("With a non-linear path", func() {
+		var (
+			m map[string]Mapper
 		)
 
-		BeforeEach(func(){
-			m = make(map[string] Mapper)
+		BeforeEach(func() {
+			m = make(map[string]Mapper)
 		})
 
-		It("passes a linked channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done){
+		It("passes a linked channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
 			defer close(done)
 
 			a := NewFunctionInfo("a", nil, "", PRODUCER)
@@ -61,16 +61,15 @@ var _ = Describe("ChannelMapper", func() {
 	})
 })
 
-
-func areStreamsLinked(out WriteOnlyChannel, ins ...ReadOnlyChannel) bool{
-	for i := 0; i<10; i++{
-		go func(){
+func areStreamsLinked(out WriteOnlyChannel, ins ...ReadOnlyChannel) bool {
+	for i := 0; i < 10; i++ {
+		go func() {
 			out <- NewHashedData(i, i)
 		}()
-		
-		for _, in := range ins{
-			test := <- in
-			if test.Hash() != i || test.Data().(int) != i{
+
+		for _, in := range ins {
+			test := <-in
+			if test.Hash() != i || test.Data().(int) != i {
 				return false
 			}
 		}

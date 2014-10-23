@@ -1,26 +1,26 @@
 package hydra
 
-type HashedData interface{
+type HashedData interface {
 	Hash() int
 	Data() interface{}
 }
 
-type hashedData struct{
+type hashedData struct {
 	hash int
 	data interface{}
 }
 
-func NewHashedData(hash int, data interface{}) HashedData{
+func NewHashedData(hash int, data interface{}) HashedData {
 	return &hashedData{
-		hash : hash,
-		data : data,
+		hash: hash,
+		data: data,
 	}
 }
 
-func (h *hashedData) Hash() int{
+func (h *hashedData) Hash() int {
 	return h.hash
 }
 
-func (h *hashedData) Data() interface{}{
+func (h *hashedData) Data() interface{} {
 	return h.data
 }

@@ -1,27 +1,27 @@
 package hydra
 
 import (
-	"reflect"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"reflect"
 )
 
 var _ = Describe("SetupFunction", func() {
-	Context("Builder", func(){
+	Context("Builder", func() {
 		var resultsChan chan FunctionInfo
-		BeforeEach(func(){
+		BeforeEach(func() {
 			resultsChan = make(chan FunctionInfo, 1)
 		})
 
-		It("writes the correct information to the channel", func(done Done){
+		It("writes the correct information to the channel", func(done Done) {
 			defer close(done)
 
-			fake := func(s SetupFunction){}
+			fake := func(s SetupFunction) {}
 			f := buildSetupFunc("someName", fake, resultsChan)
 			fakeIn := make(chan HashedData)
 			fakeOut := make(chan HashedData)
 
-			go func(){
+			go func() {
 				defer GinkgoRecover()
 				in, out := f("someParent", FILTER)
 				var fin ReadOnlyChannel
@@ -32,7 +32,7 @@ var _ = Describe("SetupFunction", func() {
 				Expect(out).To(BeEquivalentTo(fout))
 			}()
 
-			fi := <- resultsChan
+			fi := <-resultsChan
 			fi.ReadChan() <- fakeIn
 			fi.WriteChan() <- fakeOut
 
@@ -42,66 +42,66 @@ var _ = Describe("SetupFunction", func() {
 			Expect(fi.FuncType()).To(Equal(FILTER))
 		}, 1)
 
-		It("PRODUCER doesn't read from ReadChan", func(done Done){
+		It("PRODUCER doesn't read from ReadChan", func(done Done) {
 			defer close(done)
 
-			fake := func(s SetupFunction){}
+			fake := func(s SetupFunction) {}
 			f := buildSetupFunc("someName", fake, resultsChan)
 
 			var fout WriteOnlyChannel
 			fakeOut := make(chan HashedData)
 			fout = fakeOut
 
-			go func(){
-				fi := <- resultsChan
+			go func() {
+				fi := <-resultsChan
 				fi.WriteChan() <- fakeOut
 			}()
 
 			_, out := f("someParent", PRODUCER)
-			
+
 			Expect(out).To(BeEquivalentTo(fout))
 		}, 1)
 
-		It("CONSUMER doesn't read from WriteChan", func(done Done){
+		It("CONSUMER doesn't read from WriteChan", func(done Done) {
 			defer close(done)
 
-			fake := func(s SetupFunction){}
+			fake := func(s SetupFunction) {}
 			f := buildSetupFunc("someName", fake, resultsChan)
 
 			var fin ReadOnlyChannel
 			fakeIn := make(chan HashedData)
 			fin = fakeIn
 
-			go func(){
-				fi := <- resultsChan
+			go func() {
+				fi := <-resultsChan
 				fi.ReadChan() <- fakeIn
 			}()
 
 			in, _ := f("someParent", CONSUMER)
-			
+
 			Expect(in).To(BeEquivalentTo(fin))
 		}, 1)
 	})
-	Context("Interface Implementation", func(){
-		var(
-			fake *fakeSetupFunction
+	Context("Interface Implementation", func() {
+		var (
+			fake      *fakeSetupFunction
 			fakeSetup SetupFunction
 		)
-		
-		BeforeEach(func(){
+
+		BeforeEach(func() {
 			fake = NewFakeSetupFunction()
 			fakeSetup = setupFunction(fake.setup)
 		})
 
-		Context("AsProducer", func(){
-			It("Returns the correct channel and FunctionType", func(){
+		Context("AsProducer", func() {
+			It("Returns the correct channel and FunctionType", func() {
 				Expect(fakeSetup.AsProducer()).To(Equal(fake.out))
 				Expect(fake.funcType).To(Equal(PRODUCER))
 			})
 		})
 
-		Context("AsFilter", func(){
-			It("Returns the correct channels, FunctionType and parent", func(){
+		Context("AsFilter", func() {
+			It("Returns the correct channels, FunctionType and parent", func() {
 				in, out := fakeSetup.AsFilter("fakeParent")
 				Expect(in).To(Equal(fake.in))
 				Expect(out).To(Equal(fake.out))
@@ -110,8 +110,8 @@ var _ = Describe("SetupFunction", func() {
 			})
 		})
 
-		Context("AsConsumer", func(){
-			It("Returns the correct channel, FunctionType, and parent", func(){
+		Context("AsConsumer", func() {
+			It("Returns the correct channel, FunctionType, and parent", func() {
 				Expect(fakeSetup.AsConsumer("fakeParent")).To(Equal(fake.in))
 				Expect(fake.funcType).To(Equal(CONSUMER))
 				Expect(fake.parent).To(Equal("fakeParent"))
@@ -120,21 +120,21 @@ var _ = Describe("SetupFunction", func() {
 	})
 })
 
-type fakeSetupFunction struct{
-	parent string
+type fakeSetupFunction struct {
+	parent   string
 	funcType FunctionType
-	in ReadOnlyChannel
-	out WriteOnlyChannel
+	in       ReadOnlyChannel
+	out      WriteOnlyChannel
 }
 
-func NewFakeSetupFunction() *fakeSetupFunction{
+func NewFakeSetupFunction() *fakeSetupFunction {
 	return &fakeSetupFunction{
-		in : make(chan HashedData),
-		out : make(chan HashedData),
+		in:  make(chan HashedData),
+		out: make(chan HashedData),
 	}
 }
 
-func (f *fakeSetupFunction) setup (parent string, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel){
+func (f *fakeSetupFunction) setup(parent string, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 	f.parent = parent
 	f.funcType = funcType
 	return f.in, f.out

@@ -6,8 +6,8 @@ import (
 )
 
 var _ = Describe("HashedData", func() {
-	Context("NewHashedData", func(){
-		It("has the correct data", func(){
+	Context("NewHashedData", func() {
+		It("has the correct data", func() {
 			h := NewHashedData(99, 108)
 
 			Expect(h.Hash()).To(Equal(99))
