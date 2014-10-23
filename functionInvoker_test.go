@@ -52,12 +52,15 @@ var _ = Describe("FunctionInvoker", func() {
 
 		It("passes the SetupFunction to each function", func(done Done){
 			defer close(done)
+			c := make(chan SetupFunction)
 	
 			fake := func(sf SetupFunction){
-				Expect(reflect.ValueOf(sf).Pointer()).To(Equal(reflect.ValueOf(fakeSetup).Pointer()))
+				c <- sf
 			}
 
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
+			f := <- c
+			Expect(reflect.ValueOf(f).Pointer()).To(Equal(reflect.ValueOf(fakeSetup).Pointer()))
 		}, 1)
 
 		It("returns the same channel (non-nil) as the functions receive", func(done Done){
