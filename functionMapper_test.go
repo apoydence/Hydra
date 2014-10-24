@@ -6,8 +6,8 @@ import (
 )
 
 var _ = Describe("FunctionMapper", func() {
-	Context("FunctionMapper", func() {
-		It("maps correct key to function", func() {
+	Context("FunctionMapper", func(){
+		It("maps the correct key to the function", func(){
 			fc := make(chan FunctionInfo, 3)
 			fc <- NewFunctionInfo("a", nil, "", 1, PRODUCER)
 			fc <- NewFunctionInfo("b", nil, "", 1, PRODUCER)
@@ -20,7 +20,7 @@ var _ = Describe("FunctionMapper", func() {
 			}
 		})
 
-		It("maps all the parts to their consumers", func(){
+		It("maps each part to its consumer", func(){
 			a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
 			b := NewFunctionInfo("b", nil, "a", 1, FILTER)
 			c := NewFunctionInfo("c", nil, "b", 1, CONSUMER)
