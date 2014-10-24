@@ -4,28 +4,31 @@ type FunctionInfo interface {
 	Name() string
 	Function() func(SetupFunction)
 	Parent() string
+	Instances() int
 	FuncType() FunctionType
 	ReadChan() chan ReadOnlyChannel
 	WriteChan() chan WriteOnlyChannel
 }
 
-type functionInfo struct {
-	name      string
-	f         func(SetupFunction)
-	parent    string
-	funcType  FunctionType
-	readChan  chan ReadOnlyChannel
+type functionInfo struct{
+	name string
+	f func(SetupFunction)
+	parent string
+	instances int
+	funcType FunctionType
+	readChan chan ReadOnlyChannel
 	writeChan chan WriteOnlyChannel
 }
 
-func NewFunctionInfo(name string, f func(SetupFunction), parent string, funcType FunctionType) FunctionInfo {
+func NewFunctionInfo(name string, f func(SetupFunction), parent string, instances int, funcType FunctionType) FunctionInfo{
 	return &functionInfo{
-		name:      name,
-		f:         f,
-		parent:    parent,
-		funcType:  funcType,
-		readChan:  make(chan ReadOnlyChannel),
-		writeChan: make(chan WriteOnlyChannel),
+		name : name,
+		f : f,
+		parent : parent,
+		instances : instances,
+		funcType : funcType,
+		readChan : make(chan ReadOnlyChannel),
+		writeChan : make(chan WriteOnlyChannel),
 	}
 }
 
@@ -41,7 +44,11 @@ func (f *functionInfo) Parent() string {
 	return f.parent
 }
 
-func (f *functionInfo) FuncType() FunctionType {
+func (f *functionInfo) Instances() int{
+	return f.instances
+}
+
+func (f *functionInfo) FuncType() FunctionType{
 	return f.funcType
 }
 

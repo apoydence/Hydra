@@ -19,7 +19,7 @@ var _ = Describe("FunctionInvoker", func() {
 				return fakeSetup
 			}
 
-			fakeSetup = func(parent string, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
+			fakeSetup = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel){
 				panic("Not intended to be called")
 			}
 		})
@@ -77,9 +77,6 @@ var _ = Describe("FunctionInvoker", func() {
 			Expect(c).ToNot(BeNil())
 			Expect(c).To(BeEquivalentTo(result))
 		}, 1)
-
-		//It("invokes the correct number of instances", func(){
-		//})
 	})
 })
 

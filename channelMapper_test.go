@@ -18,8 +18,8 @@ var _ = Describe("ChannelMapper", func() {
 		It("passes the same channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
 			defer close(done)
 
-			a := NewFunctionInfo("a", nil, "", PRODUCER)
-			b := NewFunctionInfo("b", nil, "", CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
+			b := NewFunctionInfo("b", nil, "", 1, CONSUMER)
 			ma := NewMapper(a).(*mapper)
 			m["a"] = ma
 			ma.consumers = append(ma.consumers, b)
@@ -42,10 +42,10 @@ var _ = Describe("ChannelMapper", func() {
 		It("passes a linked channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
 			defer close(done)
 
-			a := NewFunctionInfo("a", nil, "", PRODUCER)
-			a1 := NewFunctionInfo("a1", nil, "", FILTER)
-			a2 := NewFunctionInfo("a2", nil, "", CONSUMER)
-			a3 := NewFunctionInfo("a3", nil, "", CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
+			a1 := NewFunctionInfo("a1", nil, "", 1, FILTER)
+			a2 := NewFunctionInfo("a2", nil, "", 1, CONSUMER)
+			a3 := NewFunctionInfo("a3", nil, "", 1, CONSUMER)
 			ma := NewMapper(a).(*mapper)
 			ma1 := NewMapper(a1).(*mapper)
 			m["a"] = ma
