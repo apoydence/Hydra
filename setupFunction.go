@@ -5,7 +5,7 @@ type FunctionType int
 type ReadOnlyChannel <-chan HashedData
 type WriteOnlyChannel chan<- HashedData
 
-type SetupFunction interface{
+type SetupFunction interface {
 	AsProducer(instances int) WriteOnlyChannel
 	AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel)
 	AsConsumer(parent string, instances int) ReadOnlyChannel
@@ -21,8 +21,8 @@ const (
 	CONSUMER
 )
 
-func buildSetupFunc(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction{
-	return func (parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel){
+func buildSetupFunc(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
+	return func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 
 		fi := NewFunctionInfo(name, f, parent, instances, funcType)
 		c <- fi
@@ -40,17 +40,17 @@ func buildSetupFunc(name string, f func(SetupFunction), c chan FunctionInfo) set
 	}
 }
 
-func (sf setupFunction) AsProducer(instances int) WriteOnlyChannel{
+func (sf setupFunction) AsProducer(instances int) WriteOnlyChannel {
 	_, out := sf("", instances, PRODUCER)
 	return out
 }
 
-func (sf setupFunction) AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel){
+func (sf setupFunction) AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel) {
 	in, out = sf(parent, instances, FILTER)
-	return 
+	return
 }
 
-func (sf setupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel{
+func (sf setupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel {
 	in, _ := sf(parent, instances, CONSUMER)
-	return in 
+	return in
 }

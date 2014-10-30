@@ -7,9 +7,9 @@ import (
 )
 
 var _ = Describe("FunctionInfo", func() {
-	Context("NewFunctionInfo", func(){
-		It("has the correct information", func(){
-			f := func(s SetupFunction){}
+	Context("NewFunctionInfo", func() {
+		It("has the correct information", func() {
+			f := func(s SetupFunction) {}
 			info := NewFunctionInfo("someName", f, "someParent", 1, PRODUCER)
 
 			Expect(info.Name()).To(Equal("someName"))

@@ -19,7 +19,7 @@ var _ = Describe("FunctionInvoker", func() {
 				return fakeSetup
 			}
 
-			fakeSetup = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel){
+			fakeSetup = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 				panic("Not intended to be called")
 			}
 		})
@@ -52,10 +52,9 @@ var _ = Describe("FunctionInvoker", func() {
 
 		It("passes the SetupFunction to each function", func(done Done) {
 			defer close(done)
-			c := make(chan SetupFunction)
 
 			fake := func(sf SetupFunction) {
-				c <- sf
+				Expect(reflect.ValueOf(sf).Pointer()).To(Equal(reflect.ValueOf(fakeSetup).Pointer()))
 			}
 
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)

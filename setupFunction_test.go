@@ -59,6 +59,7 @@ var _ = Describe("SetupFunction", func() {
 			}()
 
 			_, out := f("someParent", 5, PRODUCER)
+
 			Expect(out).To(BeEquivalentTo(fout))
 		}, 1)
 
@@ -78,14 +79,14 @@ var _ = Describe("SetupFunction", func() {
 			}()
 
 			in, _ := f("someParent", 5, CONSUMER)
-			
+
 			Expect(in).To(BeEquivalentTo(fin))
 		}, 1)
 	})
 
-	Context("Interface Implementation", func(){
-		var(
-			fake *fakeSetupFunction
+	Context("Interface Implementation", func() {
+		var (
+			fake      *fakeSetupFunction
 			fakeSetup SetupFunction
 		)
 
@@ -94,16 +95,16 @@ var _ = Describe("SetupFunction", func() {
 			fakeSetup = setupFunction(fake.setup)
 		})
 
-		Context("AsProducer", func(){
-			It("Returns the correct channel and FunctionType", func(){
+		Context("AsProducer", func() {
+			It("Returns the correct channel and FunctionType", func() {
 				Expect(fakeSetup.AsProducer(5)).To(Equal(fake.out))
 				Expect(fake.funcType).To(Equal(PRODUCER))
 				Expect(fake.instances).To(Equal(5))
 			})
 		})
 
-		Context("AsFilter", func(){
-			It("Returns the correct channels, FunctionType and parent", func(){
+		Context("AsFilter", func() {
+			It("Returns the correct channels, FunctionType and parent", func() {
 				in, out := fakeSetup.AsFilter("fakeParent", 5)
 				Expect(in).To(Equal(fake.in))
 				Expect(out).To(Equal(fake.out))
@@ -113,8 +114,8 @@ var _ = Describe("SetupFunction", func() {
 			})
 		})
 
-		Context("AsConsumer", func(){
-			It("Returns the correct channel, FunctionType, and parent", func(){
+		Context("AsConsumer", func() {
+			It("Returns the correct channel, FunctionType, and parent", func() {
 				Expect(fakeSetup.AsConsumer("fakeParent", 5)).To(Equal(fake.in))
 				Expect(fake.funcType).To(Equal(CONSUMER))
 				Expect(fake.parent).To(Equal("fakeParent"))
@@ -124,12 +125,12 @@ var _ = Describe("SetupFunction", func() {
 	})
 })
 
-type fakeSetupFunction struct{
-	parent string
+type fakeSetupFunction struct {
+	parent    string
 	instances int
-	funcType FunctionType
-	in       ReadOnlyChannel
-	out      WriteOnlyChannel
+	funcType  FunctionType
+	in        ReadOnlyChannel
+	out       WriteOnlyChannel
 }
 
 func NewFakeSetupFunction() *fakeSetupFunction {
@@ -139,7 +140,7 @@ func NewFakeSetupFunction() *fakeSetupFunction {
 	}
 }
 
-func (f *fakeSetupFunction) setup (parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel){
+func (f *fakeSetupFunction) setup(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 	f.parent = parent
 	f.instances = instances
 	f.funcType = funcType
