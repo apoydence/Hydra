@@ -1,6 +1,7 @@
 package hydra
 
 type DistributedFunctionMap interface {
+	Functions() []string
 	Instances(name string) []FunctionInfo
 	Consumers(name string) []string
 }
@@ -23,6 +24,14 @@ func NewDistributedMap() DistributedFunctionMap {
 	var dfm distFunctionMap
 	dfm = make(map[string]*distMapper)
 	return dfm
+}
+
+func (dm distFunctionMap) Functions() []string {
+	result := make([]string, 0)
+	for k, _ := range dm {
+		result = append(result, k)
+	}
+	return result
 }
 
 func (dm distFunctionMap) Instances(name string) []FunctionInfo {
