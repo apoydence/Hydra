@@ -38,9 +38,7 @@ func mapFunctions(numOfFunctions int, functionChan <-chan FunctionInfo) Function
 	for i := 0; i < numOfFunctions; i++ {
 		funInfo := fetchNextFunctionInfo(functionChan)
 
-		if funInfo.FuncType() != CONSUMER {
-			addToMap(funInfo, m)
-		}
+		addToMap(funInfo, m)
 
 		if funInfo.FuncType() != PRODUCER {
 			parentInfo := fetchParent(funInfo.Parent(), m)
@@ -54,17 +52,7 @@ func mapFunctions(numOfFunctions int, functionChan <-chan FunctionInfo) Function
 		}
 	}
 
-	cleanUpMap(m)
-
 	return m
-}
-
-func cleanUpMap(m FunctionMap) {
-	for k, v := range m {
-		if len(v.Consumers()) == 0 {
-			delete(m, k)
-		}
-	}
 }
 
 func fetchNextFunctionInfo(c <-chan FunctionInfo) FunctionInfo {

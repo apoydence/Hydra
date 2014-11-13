@@ -23,7 +23,7 @@ var _ = Describe("Scaffolding", func() {
 			}
 		}, 1)
 
-		It("with a non-linear path", func(done Done) {
+		PIt("with a non-linear path", func(done Done) {
 			defer close(done)
 
 			results1 := make(chan HashedData)

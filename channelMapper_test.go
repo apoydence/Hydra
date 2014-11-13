@@ -6,76 +6,129 @@ import (
 )
 
 var _ = Describe("ChannelMapper", func() {
-	Context("With a single instance of each function", func() {
-		Context("With a linear path", func() {
-			var (
-				m map[string]Mapper
-			)
+	Context("With multiple instances", func() {
 
-			BeforeEach(func() {
-				m = make(map[string]Mapper)
-			})
+		setupTest := func(numOfIns, numOfOuts int) []float64{
+			ins := make(chan WriteOnlyChannel)
+			outs := make(chan ReadOnlyChannel)
 
-			It("passes a linked channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
+			fa := func(sf SetupFunction){
+				ins <- sf.AsProducer(numOfIns)
+			}
+
+			fb := func(sf SetupFunction){
+				outs <- sf.AsConsumer("", numOfOuts)
+			}
+
+			fca := make(chan FunctionInfo)
+			fcb := make(chan FunctionInfo)
+			setupFa := buildSetupFunc("a", fa, fca)
+			setupFb := buildSetupFunc("b", fb, fcb)
+
+			for i:=0; i<numOfIns; i++{
+				go fa(setupFa)
+			}
+
+			for i:=0; i<numOfOuts; i++{
+				go fb(setupFb)
+			}
+
+			a := fetchFunctionInfos(fca, numOfIns)
+			b := fetchFunctionInfos(fcb, numOfOuts)
+
+			m := make(map[string]*distMapper)
+
+			da := newDistMapper(a, createSlice("b"))
+			m["a"] = da
+			db := newDistMapper(b, createSlice())
+			m["b"] = db
+
+			var distMap distFunctionMap
+			distMap = m
+			channelMapper(distMap)
+
+			return channelLoad(numOfIns, ins, numOfOuts, outs)
+		}
+
+		Context("Same instances in and out", func() {
+			It("Same ins and outs", func(done Done) {
 				defer close(done)
 
-				a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
-				b := NewFunctionInfo("b", nil, "", 1, CONSUMER)
-				ma := NewMapper(a).(*mapper)
-				m["a"] = ma
-				ma.consumers = append(ma.consumers, b)
+				loads := setupTest(5, 5)
+				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
+				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
+	
+			}, 1)
 
-				go channelMapper(m)
+			It("More ins than outs", func(done Done) {
+				defer close(done)
 
-				Expect(areStreamsLinked(<-a.WriteChan(), <-b.ReadChan())).To(BeTrue())
+				loads := setupTest(7, 5)
+				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
+				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
+	
 			}, 1)
 		})
-
-		Context("With a non-linear path", func() {
-			var (
-				m map[string]Mapper
-			)
-
-			BeforeEach(func() {
-				m = make(map[string]Mapper)
+		Context("More ins than outs", func() {
+			It("Should evenly distribute", func() {
 			})
-
-			It("passes a linked channel for PRODUCER/FILTER to FILTER/CONSUMER", func(done Done) {
-				defer close(done)
-
-				a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
-				a1 := NewFunctionInfo("a1", nil, "", 1, FILTER)
-				a2 := NewFunctionInfo("a2", nil, "", 1, CONSUMER)
-				a3 := NewFunctionInfo("a3", nil, "", 1, CONSUMER)
-				ma := NewMapper(a).(*mapper)
-				ma1 := NewMapper(a1).(*mapper)
-				m["a"] = ma
-				m["a1"] = ma1
-				ma.consumers = append(ma.consumers, a1, a2)
-				ma1.consumers = append(ma1.consumers, a3)
-
-				go channelMapper(m)
-
-				Expect(areStreamsLinked(<-a.WriteChan(), <-a1.ReadChan(), <-a2.ReadChan())).To(BeTrue())
-				Expect(areStreamsLinked(<-a1.WriteChan(), <-a3.ReadChan())).To(BeTrue())
+		})
+		Context("Less ins than outs", func() {
+			It("Should evenly distribute", func() {
 			})
 		})
 	})
 })
 
-func areStreamsLinked(out WriteOnlyChannel, ins ...ReadOnlyChannel) bool {
-	for i := 0; i < 10; i++ {
-		go func() {
-			out <- NewHashedData(i, i)
-		}()
+func fetchFunctionInfos(c chan FunctionInfo, count int) []FunctionInfo{
+	defer close(c)
+	result := make([]FunctionInfo, 0)
+	for i:=0; i<count; i++{
+		result = append(result, <-c)
+	}
+	return result
+}
 
-		for _, in := range ins {
-			test := <-in
-			if test.Hash() != i || test.Data().(int) != i {
-				return false
+func approximate(value, expected, plusOrMinus float64) bool{
+	return 	value <= expected + plusOrMinus &&
+		value >= expected - plusOrMinus;
+}
+
+func createSlice(names ...string)[]string{
+	result := make([]string, 0)
+	for _, n := range names{
+		result = append(result, n)
+	}
+	return result
+}
+
+func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs chan ReadOnlyChannel)[]float64{
+	for i:=0; i<insCount; i++{
+		in := <- ins
+		go func(){
+			defer close(in)
+			for i:=0; i<100; i++{
+				in <- NewHashedData(i, i);
 			}
-		}
+		}()
 	}
 
-	return true
+	loadCh := make(chan float64)
+	loads := make([]float64, 0)
+
+	for i:=0; i<outsCount; i++{
+		out := <- outs
+		go func(){
+			count := 0
+			for _ = range out{
+				count++
+			}
+			loadCh <- float64(count) / 100.0
+		}()
+	}
+
+	for i:=0; i<outsCount; i++{
+		loads = append(loads, <-loadCh)
+	}
+	return loads
 }

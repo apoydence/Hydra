@@ -55,7 +55,7 @@ var _ = Describe("FunctionMapper", func() {
 			Expect(m["a"].Consumers()).To(ContainElement(c))
 		})
 
-		It("keeps only producers/filters that have a consumer", func() {
+		It("doesn't just keep the producers/filters that have a consumer", func() {
 			fc := make(chan FunctionInfo, 4)
 			a := NewFunctionInfo("a", nil, "", 1, PRODUCER)
 			b := NewFunctionInfo("b", nil, "a", 1, CONSUMER)
@@ -69,8 +69,11 @@ var _ = Describe("FunctionMapper", func() {
 
 			m := mapFunctions(4, fc)
 
-			Expect(len(m)).To(Equal(1))
+			Expect(len(m)).To(Equal(4))
 			Expect(m["a"]).ToNot(BeNil())
+			Expect(m["b"]).ToNot(BeNil())
+			Expect(m["c"]).ToNot(BeNil())
+			Expect(m["d"]).ToNot(BeNil())
 		})
 
 		It("panics with a name mismatch", func() {

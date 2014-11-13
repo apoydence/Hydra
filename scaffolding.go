@@ -7,10 +7,12 @@ func setupScaffolding() Scaffolding {
 		buildSetup := buildSetupFunc
 		funcInvoker := functionInvoker
 		funcMapper := mapFunctions
+		distributor := distribute
 		chMapper := channelMapper
 
 		chanFuncInfo := funcInvoker(buildSetup, fs...)
 		fmap := funcMapper(len(fs), chanFuncInfo)
-		chMapper(fmap)
+		dfMap := distributor(fmap)
+		chMapper(dfMap)
 	}
 }

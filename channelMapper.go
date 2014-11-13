@@ -1,53 +1,68 @@
 package hydra
 
-type ChannelMapper func(m FunctionMap)
+type ChannelMapper func(m DistributedFunctionMap)
 
-func channelMapper(m FunctionMap) {
-	for _, v := range m {
-		c := make(chan HashedData)
-		setWriteChannel(v.Info().WriteChan(), c)
+func channelMapper(m DistributedFunctionMap) {
 
-		if len(v.Consumers()) == 1 {
-			setReadChannel(v.Consumers()[0].ReadChan(), c)
-		} else {
-			cs := assembleChannels(v.Consumers())
-			go distributeData(c, cs)
+	for _, funcName := range m.Functions(){
+		instances := m.Instances(funcName)
+		cs := createChannels(len(instances))
+		setWriteChannels(m.Instances(funcName), cs)
+
+		consumers := m.Consumers(funcName)
+		numberOfConsumers := len(consumers)
+
+		if numberOfConsumers == 1 {
+			setReadChannels(m.Instances(consumers[0]), cs)
+		} else if numberOfConsumers > 1{
+			panic("Not yet implemented...")
 		}
 	}
 }
 
-func setWriteChannel(c chan WriteOnlyChannel, d chan HashedData) {
-	go func() {
-		c <- d
-	}()
-}
-
-func setReadChannel(c chan ReadOnlyChannel, d chan HashedData) {
-	go func() {
-		c <- d
-	}()
-}
-
-func assembleChannels(fi []FunctionInfo) []chan HashedData {
+func createChannels(count int) []chan HashedData{
 	results := make([]chan HashedData, 0)
-	for _, f := range fi {
-		c := make(chan HashedData)
-		results = append(results, c)
-		setReadChannel(f.ReadChan(), c)
+	for i:=0; i<count; i++{
+		results = append(results, make(chan HashedData))
 	}
 	return results
 }
 
-func distributeData(dc chan HashedData, cs []chan HashedData) {
-	defer func() {
-		for _, c := range cs {
-			close(c)
+func setWriteChannels(instances []FunctionInfo, cs []chan HashedData){
+	go func(){
+		for i, fi := range instances{
+			fi.WriteChan() <- cs[i]
 		}
 	}()
+}
 
-	for data := range dc {
-		for _, c := range cs {
-			c <- data
-		}
+func setReadChannels(instances []FunctionInfo, cs []chan HashedData){
+	instLength := len(instances)
+	chanLength := len(cs)
+
+	if instLength == chanLength{
+		go setReadChannelsEqual(instances, cs)
+	}else if instLength > chanLength{
+		go setReadChannelsLess(instances, cs)
+	}else{
+		go setReadChannelsGreater(instances, cs)
+	}
+}
+
+func setReadChannelsEqual(instances []FunctionInfo, cs []chan HashedData){
+	for i, fi := range instances{
+		fi.ReadChan() <- cs[i]
+	}
+}
+
+func setReadChannelsGreater(instances []FunctionInfo, cs []chan HashedData){
+	for i, fi := range instances{
+		fi.ReadChan() <- cs[i % len(cs)]
+	}
+}
+
+func setReadChannelsLess(instances []FunctionInfo, cs []chan HashedData){
+	for i, c := range cs{
+		instances[i % len(instances)].ReadChan() <- c
 	}
 }
