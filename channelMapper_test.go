@@ -8,15 +8,15 @@ import (
 var _ = Describe("ChannelMapper", func() {
 	Context("With multiple instances", func() {
 
-		setupTest := func(numOfIns, numOfOuts int) []float64{
+		setupTest := func(numOfIns, numOfOuts int) []float64 {
 			ins := make(chan WriteOnlyChannel)
 			outs := make(chan ReadOnlyChannel)
 
-			fa := func(sf SetupFunction){
+			fa := func(sf SetupFunction) {
 				ins <- sf.AsProducer(numOfIns)
 			}
 
-			fb := func(sf SetupFunction){
+			fb := func(sf SetupFunction) {
 				outs <- sf.AsConsumer("", numOfOuts)
 			}
 
@@ -25,11 +25,11 @@ var _ = Describe("ChannelMapper", func() {
 			setupFa := buildSetupFunc("a", fa, fca)
 			setupFb := buildSetupFunc("b", fb, fcb)
 
-			for i:=0; i<numOfIns; i++{
+			for i := 0; i < numOfIns; i++ {
 				go fa(setupFa)
 			}
 
-			for i:=0; i<numOfOuts; i++{
+			for i := 0; i < numOfOuts; i++ {
 				go fb(setupFb)
 			}
 
@@ -57,7 +57,7 @@ var _ = Describe("ChannelMapper", func() {
 				loads := setupTest(5, 5)
 				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
 				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
-	
+
 			}, 1)
 
 			It("More ins than outs", func(done Done) {
@@ -66,7 +66,7 @@ var _ = Describe("ChannelMapper", func() {
 				loads := setupTest(7, 5)
 				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
 				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
-	
+
 			}, 1)
 		})
 		Context("More ins than outs", func() {
@@ -80,35 +80,35 @@ var _ = Describe("ChannelMapper", func() {
 	})
 })
 
-func fetchFunctionInfos(c chan FunctionInfo, count int) []FunctionInfo{
+func fetchFunctionInfos(c chan FunctionInfo, count int) []FunctionInfo {
 	defer close(c)
 	result := make([]FunctionInfo, 0)
-	for i:=0; i<count; i++{
+	for i := 0; i < count; i++ {
 		result = append(result, <-c)
 	}
 	return result
 }
 
-func approximate(value, expected, plusOrMinus float64) bool{
-	return 	value <= expected + plusOrMinus &&
-		value >= expected - plusOrMinus;
+func approximate(value, expected, plusOrMinus float64) bool {
+	return value <= expected+plusOrMinus &&
+		value >= expected-plusOrMinus
 }
 
-func createSlice(names ...string)[]string{
+func createSlice(names ...string) []string {
 	result := make([]string, 0)
-	for _, n := range names{
+	for _, n := range names {
 		result = append(result, n)
 	}
 	return result
 }
 
-func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs chan ReadOnlyChannel)[]float64{
-	for i:=0; i<insCount; i++{
-		in := <- ins
-		go func(){
+func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs chan ReadOnlyChannel) []float64 {
+	for i := 0; i < insCount; i++ {
+		in := <-ins
+		go func() {
 			defer close(in)
-			for i:=0; i<100; i++{
-				in <- NewHashedData(i, i);
+			for i := 0; i < 100; i++ {
+				in <- NewHashedData(i, i)
 			}
 		}()
 	}
@@ -116,18 +116,18 @@ func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs ch
 	loadCh := make(chan float64)
 	loads := make([]float64, 0)
 
-	for i:=0; i<outsCount; i++{
-		out := <- outs
-		go func(){
+	for i := 0; i < outsCount; i++ {
+		out := <-outs
+		go func() {
 			count := 0
-			for _ = range out{
+			for _ = range out {
 				count++
 			}
 			loadCh <- float64(count) / 100.0
 		}()
 	}
 
-	for i:=0; i<outsCount; i++{
+	for i := 0; i < outsCount; i++ {
 		loads = append(loads, <-loadCh)
 	}
 	return loads

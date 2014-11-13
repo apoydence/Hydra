@@ -17,14 +17,13 @@ var _ = Describe("FunctionInvoker", func() {
 			fakeSetup        setupFunction
 		)
 
-		fakeSetupComparer := func(s SetupFunction) bool{
+		fakeSetupComparer := func(s SetupFunction) bool {
 			fakeSetupChan <- s.(setupFunction)
-			return <- fakeSetupChanResult
+			return <-fakeSetupChanResult
 		}
 
 		BeforeEach(func() {
 
-			
 			fakeSetupBuilder = func(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
 				return fakeSetup
 			}
@@ -34,8 +33,8 @@ var _ = Describe("FunctionInvoker", func() {
 			}
 
 			pointer := reflect.ValueOf(fakeSetup).Pointer()
-			go func(){
-				for sf := range fakeSetupChan{
+			go func() {
+				for sf := range fakeSetupChan {
 					fakeSetupChanResult <- reflect.ValueOf(sf).Pointer() == pointer
 				}
 			}()
