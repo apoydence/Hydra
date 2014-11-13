@@ -9,12 +9,22 @@ import (
 var _ = Describe("FunctionInvoker", func() {
 
 	Context("when given multiple functions", func() {
+		fakeSetupChan := make(chan setupFunction)
+		fakeSetupChanResult := make(chan bool)
+
 		var (
 			fakeSetupBuilder SetupFunctionBuilder
 			fakeSetup        setupFunction
 		)
 
+		fakeSetupComparer := func(s SetupFunction) bool{
+			fakeSetupChan <- s.(setupFunction)
+			return <- fakeSetupChanResult
+		}
+
 		BeforeEach(func() {
+
+			
 			fakeSetupBuilder = func(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
 				return fakeSetup
 			}
@@ -22,6 +32,13 @@ var _ = Describe("FunctionInvoker", func() {
 			fakeSetup = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 				panic("Not intended to be called")
 			}
+
+			pointer := reflect.ValueOf(fakeSetup).Pointer()
+			go func(){
+				for sf := range fakeSetupChan{
+					fakeSetupChanResult <- reflect.ValueOf(sf).Pointer() == pointer
+				}
+			}()
 		})
 
 		It("invokes each function once initially", func(done Done) {
@@ -54,7 +71,7 @@ var _ = Describe("FunctionInvoker", func() {
 			defer close(done)
 
 			fake := func(sf SetupFunction) {
-				Expect(reflect.ValueOf(sf).Pointer()).To(Equal(reflect.ValueOf(fakeSetup).Pointer()))
+				Expect(fakeSetupComparer(sf)).To(Equal(true))
 			}
 
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
