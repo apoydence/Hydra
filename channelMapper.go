@@ -5,8 +5,8 @@ type ChannelMapper func(m DistributedFunctionMap)
 func channelMapper(m DistributedFunctionMap) {
 	for _, funcName := range m.Functions() {
 		instances := m.Instances(funcName)
-		if instances[0].FuncType() == CONSUMER{
-			return;
+		if instances[0].FuncType() == CONSUMER {
+			return
 		}
 
 		cs := createChannels(len(instances))
@@ -37,9 +37,9 @@ func setWriteChannels(instances []FunctionInfo, cs []chan HashedData) {
 	}
 }
 
-func setWriteChannel(instance FunctionInfo, c chan HashedData){
-	go func(){
-		instance.WriteChan() <- c;
+func setWriteChannel(instance FunctionInfo, c chan HashedData) {
+	go func() {
+		instance.WriteChan() <- c
 	}()
 }
 
@@ -57,7 +57,7 @@ func setReadChannels(consumerInstances []FunctionInfo, cs []chan HashedData) {
 	}
 }
 
-func setSingleReadChan(fi FunctionInfo, c chan HashedData){
+func setSingleReadChan(fi FunctionInfo, c chan HashedData) {
 	fi.ReadChan() <- c
 }
 
@@ -68,17 +68,16 @@ func setReadChannelsEqual(instances []FunctionInfo, cs []chan HashedData) {
 	}
 }
 
-
 func setReadChannelsGreater(instances []FunctionInfo, cs []chan HashedData) {
 	producerLen := len(cs)
-	for index, consumer := range instances{
-		consumer.ReadChan() <- cs[index % producerLen]
+	for index, consumer := range instances {
+		consumer.ReadChan() <- cs[index%producerLen]
 	}
 }
 
 func setReadChannelsLess(outCs []chan chan HashedData, cs []chan HashedData) {
-	defer func(){
-		for _, c := range outCs{
+	defer func() {
+		for _, c := range outCs {
 			close(c)
 		}
 	}()

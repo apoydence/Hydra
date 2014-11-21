@@ -60,7 +60,7 @@ var _ = Describe("ChannelMapper", func() {
 
 			}, 1)
 
-			It("More producers than consumers", func(done Done) {
+			FIt("More producers than consumers", func(done Done) {
 				defer close(done)
 
 				loads := setupTest(7, 5)
@@ -69,7 +69,7 @@ var _ = Describe("ChannelMapper", func() {
 
 			}, 1)
 
-			FIt("Less producers than consumers", func(done Done) {
+			It("Less producers than consumers", func(done Done) {
 				defer close(done)
 
 				loads := setupTest(1, 2)
@@ -116,19 +116,19 @@ func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs ch
 
 	loads := make([]float64, 0)
 
-	outSlice := make([] ReadOnlyChannel, 0)
+	outSlice := make([]ReadOnlyChannel, 0)
 	for i := 0; i < outsCount; i++ {
 		outSlice = append(outSlice, <-outs)
 		loads = append(loads, 0)
 	}
 
-	for i:=0; i< insCount * 100; i++{
+	for i := 0; i < insCount*100; i++ {
 		<-outSlice[i%outsCount]
-		loads[i%outsCount]++;
+		loads[i%outsCount]++
 	}
 
-	for i, v := range loads{
-		loads[i] = v / 100;
+	for i, v := range loads {
+		loads[i] = v / 100
 	}
 
 	return loads
