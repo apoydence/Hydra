@@ -50,7 +50,7 @@ var _ = Describe("ChannelMapper", func() {
 			return channelLoad(numOfIns, ins, numOfOuts, outs)
 		}
 
-		Context("Same instances in and out", func() {
+		Context("Single consumer type", func() {
 			It("Same ins and outs", func(done Done) {
 				defer close(done)
 
@@ -60,7 +60,7 @@ var _ = Describe("ChannelMapper", func() {
 
 			}, 1)
 
-			It("More ins than outs", func(done Done) {
+			It("More producers than consumers", func(done Done) {
 				defer close(done)
 
 				loads := setupTest(7, 5)
@@ -68,14 +68,15 @@ var _ = Describe("ChannelMapper", func() {
 				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
 
 			}, 1)
-		})
-		Context("More ins than outs", func() {
-			It("Should evenly distribute", func() {
-			})
-		})
-		Context("Less ins than outs", func() {
-			It("Should evenly distribute", func() {
-			})
+
+			FIt("Less producers than consumers", func(done Done) {
+				defer close(done)
+
+				loads := setupTest(1, 2)
+				Expect(approximate(loads[0], .5, .1)).To(BeTrue())
+				Expect(approximate(loads[1], .5, .1)).To(BeTrue())
+
+			}, 1)
 		})
 	})
 })
@@ -105,30 +106,30 @@ func createSlice(names ...string) []string {
 func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs chan ReadOnlyChannel) []float64 {
 	for i := 0; i < insCount; i++ {
 		in := <-ins
-		go func() {
+		go func(in WriteOnlyChannel) {
 			defer close(in)
 			for i := 0; i < 100; i++ {
 				in <- NewHashedData(i, i)
 			}
-		}()
+		}(in)
 	}
 
-	loadCh := make(chan float64)
 	loads := make([]float64, 0)
 
+	outSlice := make([] ReadOnlyChannel, 0)
 	for i := 0; i < outsCount; i++ {
-		out := <-outs
-		go func() {
-			count := 0
-			for _ = range out {
-				count++
-			}
-			loadCh <- float64(count) / 100.0
-		}()
+		outSlice = append(outSlice, <-outs)
+		loads = append(loads, 0)
 	}
 
-	for i := 0; i < outsCount; i++ {
-		loads = append(loads, <-loadCh)
+	for i:=0; i< insCount * 100; i++{
+		<-outSlice[i%outsCount]
+		loads[i%outsCount]++;
 	}
+
+	for i, v := range loads{
+		loads[i] = v / 100;
+	}
+
 	return loads
 }

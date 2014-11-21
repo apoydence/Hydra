@@ -3,11 +3,14 @@ package hydra
 type ChannelMapper func(m DistributedFunctionMap)
 
 func channelMapper(m DistributedFunctionMap) {
-
 	for _, funcName := range m.Functions() {
 		instances := m.Instances(funcName)
+		if instances[0].FuncType() == CONSUMER{
+			return;
+		}
+
 		cs := createChannels(len(instances))
-		setWriteChannels(m.Instances(funcName), cs)
+		go setWriteChannels(m.Instances(funcName), cs)
 
 		consumers := m.Consumers(funcName)
 		numberOfConsumers := len(consumers)
@@ -29,40 +32,58 @@ func createChannels(count int) []chan HashedData {
 }
 
 func setWriteChannels(instances []FunctionInfo, cs []chan HashedData) {
-	go func() {
-		for i, fi := range instances {
-			fi.WriteChan() <- cs[i]
-		}
+	for i, fi := range instances {
+		setWriteChannel(fi, cs[i])
+	}
+}
+
+func setWriteChannel(instance FunctionInfo, c chan HashedData){
+	go func(){
+		instance.WriteChan() <- c;
 	}()
 }
 
-func setReadChannels(instances []FunctionInfo, cs []chan HashedData) {
-	instLength := len(instances)
-	chanLength := len(cs)
+func setReadChannels(consumerInstances []FunctionInfo, cs []chan HashedData) {
+	consumerLength := len(consumerInstances)
+	producerLength := len(cs)
 
-	if instLength == chanLength {
-		go setReadChannelsEqual(instances, cs)
-	} else if instLength > chanLength {
-		go setReadChannelsLess(instances, cs)
+	if consumerLength == producerLength {
+		go setReadChannelsEqual(consumerInstances, cs)
+	} else if consumerLength > producerLength {
+		go setReadChannelsGreater(consumerInstances, cs)
 	} else {
-		go setReadChannelsGreater(instances, cs)
+		panic("Not yet implemented...")
+		//go setReadChannelsLess(channelCombiner(consumerInstances), cs)
 	}
+}
+
+func setSingleReadChan(fi FunctionInfo, c chan HashedData){
+	fi.ReadChan() <- c
 }
 
 func setReadChannelsEqual(instances []FunctionInfo, cs []chan HashedData) {
 	for i, fi := range instances {
 		fi.ReadChan() <- cs[i]
+		close(fi.ReadChan())
 	}
 }
+
 
 func setReadChannelsGreater(instances []FunctionInfo, cs []chan HashedData) {
-	for i, fi := range instances {
-		fi.ReadChan() <- cs[i%len(cs)]
+	producerLen := len(cs)
+	for index, consumer := range instances{
+		consumer.ReadChan() <- cs[index % producerLen]
 	}
 }
 
-func setReadChannelsLess(instances []FunctionInfo, cs []chan HashedData) {
+func setReadChannelsLess(outCs []chan chan HashedData, cs []chan HashedData) {
+	defer func(){
+		for _, c := range outCs{
+			close(c)
+		}
+	}()
+
 	for i, c := range cs {
-		instances[i%len(instances)].ReadChan() <- c
+		outCs[i%len(outCs)] <- c
 	}
 }
