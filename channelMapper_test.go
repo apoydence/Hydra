@@ -51,21 +51,19 @@ var _ = Describe("ChannelMapper", func() {
 		}
 
 		Context("Single consumer type", func() {
-			It("Same ins and outs", func(done Done) {
+			It("Same number of producers as consumers", func(done Done) {
 				defer close(done)
 
 				loads := setupTest(5, 5)
-				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
-				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
+				Expect(approximate(loads[0], loads[1], .1)).To(BeTrue())
 
 			}, 1)
 
-			FIt("More producers than consumers", func(done Done) {
+			It("More producers than consumers", func(done Done) {
 				defer close(done)
 
-				loads := setupTest(7, 5)
-				Expect(approximate(loads[0], 1, .1)).To(BeTrue())
-				Expect(approximate(loads[1], 1, .1)).To(BeTrue())
+				loads := setupTest(5, 2)
+				Expect(approximate(loads[0], loads[1], .1)).To(BeTrue())
 
 			}, 1)
 
@@ -73,10 +71,110 @@ var _ = Describe("ChannelMapper", func() {
 				defer close(done)
 
 				loads := setupTest(1, 2)
-				Expect(approximate(loads[0], .5, .1)).To(BeTrue())
-				Expect(approximate(loads[1], .5, .1)).To(BeTrue())
+				Expect(approximate(loads[0], loads[1], .1)).To(BeTrue())
 
 			}, 1)
+		})
+		Context("Multiple consumer types", func() {
+			setupTest := func(numOfIns, numOfOuts int) []float64 {
+				ins := make(chan WriteOnlyChannel)
+				outsB := make(chan ReadOnlyChannel)
+				outsC := make(chan ReadOnlyChannel)
+
+				fa := func(sf SetupFunction) {
+					ins <- sf.AsProducer(numOfIns)
+				}
+
+				fb := func(sf SetupFunction) {
+					outsB <- sf.AsConsumer("", numOfOuts)
+				}
+
+				fc := func(sf SetupFunction) {
+					outsC <- sf.AsConsumer("", numOfOuts)
+				}
+
+				fca := make(chan FunctionInfo)
+				fcb := make(chan FunctionInfo)
+				fcc := make(chan FunctionInfo)
+				setupFa := buildSetupFunc("a", fa, fca)
+				setupFb := buildSetupFunc("b", fb, fcb)
+				setupFc := buildSetupFunc("c", fc, fcc)
+
+				for i := 0; i < numOfIns; i++ {
+					go fa(setupFa)
+				}
+
+				for i := 0; i < numOfOuts; i++ {
+					go fb(setupFb)
+					go fc(setupFc)
+				}
+
+				a := fetchFunctionInfos(fca, numOfIns)
+				b := fetchFunctionInfos(fcb, numOfOuts)
+				c := fetchFunctionInfos(fcc, numOfOuts)
+
+				m := make(map[string]*distMapper)
+
+				da := newDistMapper(a, createSlice("b", "c"))
+				m["a"] = da
+				db := newDistMapper(b, createSlice())
+				m["b"] = db
+				dc := newDistMapper(c, createSlice())
+				m["c"] = dc
+
+				var distMap distFunctionMap
+				distMap = m
+
+				channelMapper(distMap)
+			
+
+				loadsCh := make(chan []float64)
+				setupInLoads(numOfIns, 100, ins)	
+	
+				fetchLoads := func(loadsCh chan []float64, outs chan ReadOnlyChannel){
+					loadsCh <- channelLoad2(100, numOfIns, numOfOuts, outs)
+				}
+
+				go fetchLoads(loadsCh, outsB)
+				go fetchLoads(loadsCh, outsC)
+
+				loads := make([] float64, 0)
+				for i:=0; i<2; i++{
+					load := <- loadsCh
+					for _, l := range load{
+						loads = append(loads, l)
+					}
+				}
+
+				return loads;
+			}
+
+			It("Same number of producers as consumers", func(done Done) {
+				defer close(done)
+
+				loads := setupTest(5, 5);
+				for _, l := range loads{
+					Expect(approximate(l, 1, .1)).To(BeTrue())
+				}
+			})
+
+			It("More producers than consumers", func(done Done) {
+				defer close(done)
+
+				loads := setupTest(10, 5);
+				for _, l := range loads{
+					Expect(approximate(l, 2, .1)).To(BeTrue())
+				}
+			})
+
+			It("Less producers than consumers", func(done Done) {
+				defer close(done)
+
+				loads := setupTest(5, 10);
+				for _, l := range loads{
+					Expect(approximate(l, 0.5, .1)).To(BeTrue())
+				}
+			})
 		})
 	})
 })
@@ -129,6 +227,39 @@ func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs ch
 
 	for i, v := range loads {
 		loads[i] = v / 100
+	}
+
+	return loads
+}
+
+func setupInLoads(insCount, count int, ins chan WriteOnlyChannel){
+	for i := 0; i < insCount; i++ {
+		in := <-ins
+		go func(in WriteOnlyChannel) {
+			defer close(in)
+			for i := 0; i < count; i++ {
+				in <- NewHashedData(i, i)
+			}
+		}(in)
+	}
+}
+
+func channelLoad2(count, insCount, outsCount int, outs chan ReadOnlyChannel) []float64 {
+	loads := make([]float64, 0)
+
+	outSlice := make([]ReadOnlyChannel, 0)
+	for i := 0; i < outsCount; i++ {
+		outSlice = append(outSlice, <-outs)
+		loads = append(loads, 0)
+	}
+
+	for i := 0; i < count * insCount; i++ {
+		<-outSlice[i%outsCount]
+		loads[i%outsCount]++
+	}
+
+	for i, v := range loads {
+		loads[i] = v / float64(count)
 	}
 
 	return loads
