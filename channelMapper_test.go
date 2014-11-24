@@ -126,34 +126,33 @@ var _ = Describe("ChannelMapper", func() {
 				distMap = m
 
 				channelMapper(distMap)
-			
 
 				loadsCh := make(chan []float64)
-				setupInLoads(numOfIns, 100, ins)	
-	
-				fetchLoads := func(loadsCh chan []float64, outs chan ReadOnlyChannel){
+				setupInLoads(numOfIns, 100, ins)
+
+				fetchLoads := func(loadsCh chan []float64, outs chan ReadOnlyChannel) {
 					loadsCh <- channelLoad2(100, numOfIns, numOfOuts, outs)
 				}
 
 				go fetchLoads(loadsCh, outsB)
 				go fetchLoads(loadsCh, outsC)
 
-				loads := make([] float64, 0)
-				for i:=0; i<2; i++{
-					load := <- loadsCh
-					for _, l := range load{
+				loads := make([]float64, 0)
+				for i := 0; i < 2; i++ {
+					load := <-loadsCh
+					for _, l := range load {
 						loads = append(loads, l)
 					}
 				}
 
-				return loads;
+				return loads
 			}
 
 			It("Same number of producers as consumers", func(done Done) {
 				defer close(done)
 
-				loads := setupTest(5, 5);
-				for _, l := range loads{
+				loads := setupTest(5, 5)
+				for _, l := range loads {
 					Expect(approximate(l, 1, .1)).To(BeTrue())
 				}
 			})
@@ -161,8 +160,8 @@ var _ = Describe("ChannelMapper", func() {
 			It("More producers than consumers", func(done Done) {
 				defer close(done)
 
-				loads := setupTest(10, 5);
-				for _, l := range loads{
+				loads := setupTest(10, 5)
+				for _, l := range loads {
 					Expect(approximate(l, 2, .1)).To(BeTrue())
 				}
 			})
@@ -170,8 +169,8 @@ var _ = Describe("ChannelMapper", func() {
 			It("Less producers than consumers", func(done Done) {
 				defer close(done)
 
-				loads := setupTest(5, 10);
-				for _, l := range loads{
+				loads := setupTest(5, 10)
+				for _, l := range loads {
 					Expect(approximate(l, 0.5, .1)).To(BeTrue())
 				}
 			})
@@ -232,7 +231,7 @@ func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs ch
 	return loads
 }
 
-func setupInLoads(insCount, count int, ins chan WriteOnlyChannel){
+func setupInLoads(insCount, count int, ins chan WriteOnlyChannel) {
 	for i := 0; i < insCount; i++ {
 		in := <-ins
 		go func(in WriteOnlyChannel) {
@@ -253,7 +252,7 @@ func channelLoad2(count, insCount, outsCount int, outs chan ReadOnlyChannel) []f
 		loads = append(loads, 0)
 	}
 
-	for i := 0; i < count * insCount; i++ {
+	for i := 0; i < count*insCount; i++ {
 		<-outSlice[i%outsCount]
 		loads[i%outsCount]++
 	}
