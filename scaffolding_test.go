@@ -15,16 +15,16 @@ var _ = Describe("Scaffolding", func() {
 				consumer(s, 7, results, doneChan)
 			}
 
-			go func(){
+			go func() {
 				defer close(results)
-				for i:=0; i<7; i++{
-					<- doneChan
+				for i := 0; i < 7; i++ {
+					<-doneChan
 				}
 			}()
 			go setupScaffolding()(producer, filter, wrapperConsumer)
 
 			expectedData := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-			rxData := make([] int, 0)
+			rxData := make([]int, 0)
 			for data := range results {
 				rxData = append(rxData, data.Data().(int))
 			}
@@ -40,10 +40,10 @@ var _ = Describe("Scaffolding", func() {
 				consumer(s, 7, results1, doneChan1)
 			}
 
-			go func(){
+			go func() {
 				defer close(results1)
-				for i:=0; i<7; i++{
-					<- doneChan1
+				for i := 0; i < 7; i++ {
+					<-doneChan1
 				}
 			}()
 
@@ -53,10 +53,10 @@ var _ = Describe("Scaffolding", func() {
 				consumer2(s, 17, results2, doneChan2)
 			}
 
-			go func(){
+			go func() {
 				defer close(results2)
-				for i:=0; i<17; i++{
-					<- doneChan2
+				for i := 0; i < 17; i++ {
+					<-doneChan2
 				}
 			}()
 
@@ -110,7 +110,7 @@ func filter2(s SetupFunction) {
 }
 
 func consumer(s SetupFunction, count int, results WriteOnlyChannel, doneChan chan interface{}) {
-	defer func(){
+	defer func() {
 		doneChan <- nil
 	}()
 	in := s.AsConsumer("github.com/apoydence/hydra.filter", count)
@@ -120,7 +120,7 @@ func consumer(s SetupFunction, count int, results WriteOnlyChannel, doneChan cha
 }
 
 func consumer2(s SetupFunction, count int, results WriteOnlyChannel, doneChan chan interface{}) {
-	defer func(){
+	defer func() {
 		doneChan <- nil
 	}()
 	in := s.AsConsumer("github.com/apoydence/hydra.filter2", count)
