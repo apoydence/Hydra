@@ -1,4 +1,4 @@
-package hydra
+package types
 
 import (
 	. "github.com/onsi/ginkgo"

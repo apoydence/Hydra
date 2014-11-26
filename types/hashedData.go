@@ -1,4 +1,4 @@
-package hydra
+package types
 
 type HashedData interface {
 	Hash() int

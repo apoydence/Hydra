@@ -1,4 +1,4 @@
-package hydra
+package types
 
 type FunctionType int
 
@@ -13,7 +13,7 @@ type SetupFunction interface {
 
 type setupFunction func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel)
 
-type SetupFunctionBuilder func(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction
+type SetupFunctionBuilder func(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction
 
 const (
 	PRODUCER FunctionType = iota
@@ -21,8 +21,9 @@ const (
 	CONSUMER
 )
 
-func buildSetupFunc(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
-	return func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
+func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
+	var setupF setupFunction
+	setupF = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 
 		fi := NewFunctionInfo(name, f, parent, instances, funcType)
 		c <- fi
@@ -38,6 +39,7 @@ func buildSetupFunc(name string, f func(SetupFunction), c chan FunctionInfo) set
 			panic("Invalid type: " + string(funcType))
 		}
 	}
+	return setupF
 }
 
 func (sf setupFunction) AsProducer(instances int) WriteOnlyChannel {

@@ -1,4 +1,4 @@
-package hydra
+package types
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -17,13 +17,13 @@ var _ = Describe("SetupFunction", func() {
 			defer close(done)
 
 			fake := func(s SetupFunction) {}
-			f := buildSetupFunc("someName", fake, resultsChan)
+			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
 			fakeIn := make(chan HashedData)
 			fakeOut := make(chan HashedData)
 
 			go func() {
 				defer GinkgoRecover()
-				in, out := f("someParent", 5, FILTER)
+				in, out := f.AsFilter("someParent", 5)
 				var fin ReadOnlyChannel
 				var fout WriteOnlyChannel
 				fin = fakeIn
@@ -47,7 +47,7 @@ var _ = Describe("SetupFunction", func() {
 			defer close(done)
 
 			fake := func(s SetupFunction) {}
-			f := buildSetupFunc("someName", fake, resultsChan)
+			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
 
 			var fout WriteOnlyChannel
 			fakeOut := make(chan HashedData)
@@ -58,7 +58,7 @@ var _ = Describe("SetupFunction", func() {
 				fi.WriteChan() <- fakeOut
 			}()
 
-			_, out := f("someParent", 5, PRODUCER)
+			out := f.AsProducer(5)
 
 			Expect(out).To(BeEquivalentTo(fout))
 		}, 1)
@@ -67,7 +67,7 @@ var _ = Describe("SetupFunction", func() {
 			defer close(done)
 
 			fake := func(s SetupFunction) {}
-			f := buildSetupFunc("someName", fake, resultsChan)
+			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
 
 			var fin ReadOnlyChannel
 			fakeIn := make(chan HashedData)
@@ -78,7 +78,7 @@ var _ = Describe("SetupFunction", func() {
 				fi.ReadChan() <- fakeIn
 			}()
 
-			in, _ := f("someParent", 5, CONSUMER)
+			in := f.AsConsumer("someParent", 5)
 
 			Expect(in).To(BeEquivalentTo(fin))
 		}, 1)

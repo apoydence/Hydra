@@ -1,4 +1,4 @@
-package hydra
+package types
 
 type FunctionInfo interface {
 	Name() string
