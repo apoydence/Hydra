@@ -1,41 +1,39 @@
-package hydra
+package functionHandlers
 
 import (
+	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"reflect"
 )
 
 var _ = Describe("FunctionInvoker", func() {
 
 	Context("when given multiple functions", func() {
-		fakeSetupChan := make(chan setupFunction)
+		fakeSetupChan := make(chan SetupFunction)
 		fakeSetupChanResult := make(chan bool)
 
 		var (
 			fakeSetupBuilder SetupFunctionBuilder
-			fakeSetup        setupFunction
+			fakeSetup        SetupFunction
+			functionInvoker	 FunctionInvoker
 		)
 
 		fakeSetupComparer := func(s SetupFunction) bool {
-			fakeSetupChan <- s.(setupFunction)
+			fakeSetupChan <- s.(SetupFunction)
 			return <-fakeSetupChanResult
 		}
 
 		BeforeEach(func() {
 
-			fakeSetupBuilder = func(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
+			functionInvoker = NewFunctionInvoker()
+			fakeSetupBuilder = func(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
 				return fakeSetup
 			}
+			fakeSetup = &fakeSetupFunction{}
 
-			fakeSetup = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
-				panic("Not intended to be called")
-			}
-
-			pointer := reflect.ValueOf(fakeSetup).Pointer()
 			go func() {
 				for sf := range fakeSetupChan {
-					fakeSetupChanResult <- reflect.ValueOf(sf).Pointer() == pointer
+					fakeSetupChanResult <- sf == fakeSetup
 				}
 			}()
 		})
@@ -47,7 +45,7 @@ var _ = Describe("FunctionInvoker", func() {
 			fake := func(sf SetupFunction) {
 				countChan <- nil
 			}
-
+	
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
 			for i := 0; i < 3; i++ {
 				<-countChan
@@ -70,18 +68,17 @@ var _ = Describe("FunctionInvoker", func() {
 			defer close(done)
 
 			fake := func(sf SetupFunction) {
+				defer GinkgoRecover()
 				Expect(fakeSetupComparer(sf)).To(Equal(true))
 			}
 
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
-			f := <-c
-			Expect(reflect.ValueOf(f).Pointer()).To(Equal(reflect.ValueOf(fakeSetup).Pointer()))
 		}, 1)
 
 		It("returns the same channel (non-nil) as the functions receive", func(done Done) {
 			defer close(done)
 			resultChan := make(chan chan FunctionInfo, 1)
-			fsb := func(name string, f func(SetupFunction), c chan FunctionInfo) setupFunction {
+			fsb := func(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
 				resultChan <- c
 				return fakeSetup
 			}
@@ -102,4 +99,19 @@ func tryRead(c chan interface{}) bool {
 	default:
 		return false
 	}
+}
+
+type fakeSetupFunction struct{
+}
+
+func (f *fakeSetupFunction) AsProducer(instances int) WriteOnlyChannel{
+	panic("Not intended to be called")
+}
+
+func (f *fakeSetupFunction) AsFilter(parent string, instances int) (ReadOnlyChannel, WriteOnlyChannel){
+	panic("Not intended to be called")
+}
+
+func (f *fakeSetupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel{
+	panic("Not intended to be called")
 }
