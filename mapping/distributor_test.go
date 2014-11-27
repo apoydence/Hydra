@@ -1,6 +1,7 @@
-package hydra
+package mapping
 
 import (
+	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"sync/atomic"

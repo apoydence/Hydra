@@ -1,6 +1,7 @@
-package hydra
+package mapping
 
 import (
+	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -13,7 +14,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- NewFunctionInfo("b", nil, "", 1, PRODUCER)
 			fc <- NewFunctionInfo("c", nil, "", 1, PRODUCER)
 
-			m := mapFunctions(3, fc)
+			m := NewFunctionMapper()(3, fc)
 
 			for k, v := range m {
 				Expect(k).To(Equal(v.Info().Name()))
@@ -30,7 +31,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- b
 			fc <- c
 
-			m := mapFunctions(3, fc)
+			m := NewFunctionMapper()(3, fc)
 
 			Expect(len(m["a"].Consumers())).To(Equal(1))
 			Expect(m["a"].Consumers()).To(ContainElement(b))
@@ -48,7 +49,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- b
 			fc <- c
 
-			m := mapFunctions(3, fc)
+			m := NewFunctionMapper()(3, fc)
 
 			Expect(len(m["a"].Consumers())).To(Equal(2))
 			Expect(m["a"].Consumers()).To(ContainElement(b))
@@ -67,7 +68,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- c
 			fc <- d
 
-			m := mapFunctions(4, fc)
+			m := NewFunctionMapper()(4, fc)
 
 			Expect(len(m)).To(Equal(4))
 			Expect(m["a"]).ToNot(BeNil())
@@ -84,7 +85,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- a
 			fc <- b
 
-			Expect(func() { mapFunctions(2, fc) }).To(Panic())
+			Expect(func() { NewFunctionMapper()(2, fc) }).To(Panic())
 		})
 
 		It("detects that the number of functions is wrong", func(done Done) {
@@ -95,7 +96,7 @@ var _ = Describe("FunctionMapper", func() {
 			fc <- a
 			fc <- b
 
-			Expect(func() { mapFunctions(9, fc) }).To(Panic())
+			Expect(func() { NewFunctionMapper()(9, fc) }).To(Panic())
 			close(done)
 		}, 1)
 	})

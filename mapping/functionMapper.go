@@ -1,46 +1,52 @@
-package hydra
+package mapping
 
 import (
+	"github.com/apoydence/hydra/types"
+
 	"time"
 )
 
 type Mapper interface {
-	Info() FunctionInfo
-	Consumers() []FunctionInfo
+	Info() types.FunctionInfo
+	Consumers() []types.FunctionInfo
 }
 
 type mapper struct {
-	info      FunctionInfo
-	consumers []FunctionInfo
+	info      types.FunctionInfo
+	consumers []types.FunctionInfo
 }
 
 type FunctionMap map[string]Mapper
 
-type FunctionMapper func(numOfFunctions int, functionChan <-chan FunctionInfo) FunctionMap
+type FunctionMapper func(numOfFunctions int, functionChan <-chan types.FunctionInfo) FunctionMap
 
-func NewMapper(info FunctionInfo) Mapper {
+func NewMapper(info types.FunctionInfo) Mapper {
 	return &mapper{
 		info:      info,
-		consumers: make([]FunctionInfo, 0),
+		consumers: make([]types.FunctionInfo, 0),
 	}
 }
 
-func (m *mapper) Info() FunctionInfo {
+func (m *mapper) Info() types.FunctionInfo {
 	return m.info
 }
 
-func (m *mapper) Consumers() []FunctionInfo {
+func (m *mapper) Consumers() []types.FunctionInfo {
 	return m.consumers
 }
 
-func mapFunctions(numOfFunctions int, functionChan <-chan FunctionInfo) FunctionMap {
+func NewFunctionMapper() FunctionMapper{
+	return mapFunctions
+}
+
+func mapFunctions(numOfFunctions int, functionChan <-chan types.FunctionInfo) FunctionMap {
 	m := make(FunctionMap)
 	for i := 0; i < numOfFunctions; i++ {
 		funInfo := fetchNextFunctionInfo(functionChan)
 
 		addToMap(funInfo, m)
 
-		if funInfo.FuncType() != PRODUCER {
+		if funInfo.FuncType() != types.PRODUCER {
 			parentInfo := fetchParent(funInfo.Parent(), m)
 			parentInfo.consumers = append(parentInfo.consumers, funInfo)
 		}
@@ -55,7 +61,7 @@ func mapFunctions(numOfFunctions int, functionChan <-chan FunctionInfo) Function
 	return m
 }
 
-func fetchNextFunctionInfo(c <-chan FunctionInfo) FunctionInfo {
+func fetchNextFunctionInfo(c <-chan types.FunctionInfo) types.FunctionInfo {
 	t := time.NewTicker(500 * time.Millisecond)
 	select {
 	case _ = <-t.C:
@@ -65,7 +71,7 @@ func fetchNextFunctionInfo(c <-chan FunctionInfo) FunctionInfo {
 	}
 }
 
-func addToMap(info FunctionInfo, m FunctionMap) {
+func addToMap(info types.FunctionInfo, m FunctionMap) {
 	var mapInfo *mapper
 	i, ok := m[info.Name()]
 	if ok {

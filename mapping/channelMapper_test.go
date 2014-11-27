@@ -1,6 +1,8 @@
-package hydra
+package mapping
 
 import (
+	. "github.com/apoydence/hydra/types"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -22,8 +24,8 @@ var _ = Describe("ChannelMapper", func() {
 
 			fca := make(chan FunctionInfo)
 			fcb := make(chan FunctionInfo)
-			setupFa := buildSetupFunc("a", fa, fca)
-			setupFb := buildSetupFunc("b", fb, fcb)
+			setupFa := NewSetupFunctionBuilder("a", fa, fca)
+			setupFb := NewSetupFunctionBuilder("b", fb, fcb)
 
 			for i := 0; i < numOfIns; i++ {
 				go fa(setupFa)
@@ -36,15 +38,10 @@ var _ = Describe("ChannelMapper", func() {
 			a := fetchFunctionInfos(fca, numOfIns)
 			b := fetchFunctionInfos(fcb, numOfOuts)
 
-			m := make(map[string]*distMapper)
+			distMap := NewDistributedMap()
+			distMap.Add("a", a, createSlice("b"))
+			distMap.Add("b", b, createSlice())
 
-			da := newDistMapper(a, createSlice("b"))
-			m["a"] = da
-			db := newDistMapper(b, createSlice())
-			m["b"] = db
-
-			var distMap distFunctionMap
-			distMap = m
 			channelMapper(distMap)
 
 			return channelLoad(numOfIns, ins, numOfOuts, outs)
@@ -96,9 +93,9 @@ var _ = Describe("ChannelMapper", func() {
 				fca := make(chan FunctionInfo)
 				fcb := make(chan FunctionInfo)
 				fcc := make(chan FunctionInfo)
-				setupFa := buildSetupFunc("a", fa, fca)
-				setupFb := buildSetupFunc("b", fb, fcb)
-				setupFc := buildSetupFunc("c", fc, fcc)
+				setupFa := NewSetupFunctionBuilder("a", fa, fca)
+				setupFb := NewSetupFunctionBuilder("b", fb, fcb)
+				setupFc := NewSetupFunctionBuilder("c", fc, fcc)
 
 				for i := 0; i < numOfIns; i++ {
 					go fa(setupFa)
@@ -113,17 +110,11 @@ var _ = Describe("ChannelMapper", func() {
 				b := fetchFunctionInfos(fcb, numOfOuts)
 				c := fetchFunctionInfos(fcc, numOfOuts)
 
-				m := make(map[string]*distMapper)
+				distMap := NewDistributedMap()
 
-				da := newDistMapper(a, createSlice("b", "c"))
-				m["a"] = da
-				db := newDistMapper(b, createSlice())
-				m["b"] = db
-				dc := newDistMapper(c, createSlice())
-				m["c"] = dc
-
-				var distMap distFunctionMap
-				distMap = m
+				distMap.Add("a", a, createSlice("b", "c"))
+				distMap.Add("b", b, createSlice())
+				distMap.Add("c", c, createSlice())
 
 				channelMapper(distMap)
 

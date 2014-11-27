@@ -6,6 +6,11 @@ type DistributedFunctionMap interface {
 	Consumers(name string) []string
 }
 
+type DistributedFunctionMapBuilder interface {
+	DistributedFunctionMap 
+	Add(funcName string, instances []FunctionInfo, consumers []string)
+}
+
 type distMapper struct {
 	instances []FunctionInfo
 	consumers []string
@@ -20,7 +25,7 @@ func newDistMapper(instances []FunctionInfo, consumers []string) *distMapper {
 	}
 }
 
-func NewDistributedMap() DistributedFunctionMap {
+func NewDistributedMap() DistributedFunctionMapBuilder {
 	var dfm distFunctionMap
 	dfm = make(map[string]*distMapper)
 	return dfm
@@ -48,4 +53,8 @@ func (dm distFunctionMap) Consumers(name string) []string {
 	}
 
 	return nil
+}
+
+func (dm distFunctionMap) Add(funcName string, instances []FunctionInfo, consumers []string) {
+	dm[funcName] = newDistMapper(instances, consumers)
 }
