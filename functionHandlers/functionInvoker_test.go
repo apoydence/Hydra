@@ -31,11 +31,11 @@ var _ = Describe("FunctionInvoker", func() {
 			}
 			fakeSetup = &fakeSetupFunction{}
 
-			go func() {
+			go func(fakeSetup SetupFunction) {
 				for sf := range fakeSetupChan {
 					fakeSetupChanResult <- sf == fakeSetup
 				}
-			}()
+			}(fakeSetup)
 		})
 
 		It("invokes each function once initially", func(done Done) {
