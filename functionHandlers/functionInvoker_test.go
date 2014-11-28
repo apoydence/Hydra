@@ -1,6 +1,7 @@
-package functionHandlers
+package functionHandlers_test
 
 import (
+	. "github.com/apoydence/hydra/functionHandlers"
 	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
