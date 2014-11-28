@@ -1,6 +1,7 @@
-package hydra
+package hydra_test
 
 import (
+	. "github.com/apoydence/hydra"
 	. "github.com/apoydence/hydra/types"
 
 	. "github.com/onsi/ginkgo"
@@ -23,7 +24,7 @@ var _ = Describe("Scaffolding", func() {
 					<-doneChan
 				}
 			}()
-			go setupScaffolding()(producer, filter, wrapperConsumer)
+			go NewSetupScaffolding()(producer, filter, wrapperConsumer)
 
 			expectedData := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 			rxData := make([]int, 0)
@@ -62,7 +63,7 @@ var _ = Describe("Scaffolding", func() {
 				}
 			}()
 
-			go setupScaffolding()(producer, filter, filter2, wrapperConsumer1, wrapperConsumer2)
+			go NewSetupScaffolding()(producer, filter, filter2, wrapperConsumer1, wrapperConsumer2)
 
 			go func() {
 				expectedIndex := 0
@@ -92,7 +93,7 @@ func producer(s SetupFunction) {
 }
 
 func filter(s SetupFunction) {
-	in, out := s.AsFilter("github.com/apoydence/hydra.producer", 10)
+	in, out := s.AsFilter("github.com/apoydence/hydra_test.producer", 10)
 	defer close(out)
 
 	for data := range in {
@@ -101,7 +102,7 @@ func filter(s SetupFunction) {
 }
 
 func filter2(s SetupFunction) {
-	in, out := s.AsFilter("github.com/apoydence/hydra.producer", 5)
+	in, out := s.AsFilter("github.com/apoydence/hydra_test.producer", 5)
 	defer close(out)
 
 	for data := range in {
@@ -115,7 +116,7 @@ func consumer(s SetupFunction, count int, results WriteOnlyChannel, doneChan cha
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.AsConsumer("github.com/apoydence/hydra.filter", count)
+	in := s.AsConsumer("github.com/apoydence/hydra_test.filter", count)
 	for data := range in {
 		results <- data
 	}
@@ -125,7 +126,7 @@ func consumer2(s SetupFunction, count int, results WriteOnlyChannel, doneChan ch
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.AsConsumer("github.com/apoydence/hydra.filter2", count)
+	in := s.AsConsumer("github.com/apoydence/hydra_test.filter2", count)
 	for data := range in {
 		results <- data
 	}

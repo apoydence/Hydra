@@ -1,4 +1,4 @@
-package hydra
+package hydra_test
 
 import (
 	. "github.com/onsi/ginkgo"

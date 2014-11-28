@@ -8,7 +8,7 @@ import(
 
 type Scaffolding func(fs ...func(types.SetupFunction))
 
-func setupScaffolding() Scaffolding {
+func NewSetupScaffolding() Scaffolding {
 	return func(fs ...func(types.SetupFunction)) {
 		buildSetup := types.NewSetupFunctionBuilder
 		funcInvoker := functionHandlers.NewFunctionInvoker()
