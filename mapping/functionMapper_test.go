@@ -1,6 +1,7 @@
-package mapping
+package mapping_test
 
 import (
+	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -16,8 +17,8 @@ var _ = Describe("FunctionMapper", func() {
 
 			m := NewFunctionMapper()(3, fc)
 
-			for k, v := range m {
-				Expect(k).To(Equal(v.Info().Name()))
+			for _, funcName := range m.FunctionNames() {
+				Expect(funcName).To(Equal(m.Info(funcName).Name()))
 			}
 		})
 
@@ -33,10 +34,10 @@ var _ = Describe("FunctionMapper", func() {
 
 			m := NewFunctionMapper()(3, fc)
 
-			Expect(len(m["a"].Consumers())).To(Equal(1))
-			Expect(m["a"].Consumers()).To(ContainElement(b))
-			Expect(len(m["b"].Consumers())).To(Equal(1))
-			Expect(m["b"].Consumers()).To(ContainElement(c))
+			Expect(len(m.Consumers("a"))).To(Equal(1))
+			Expect(m.Consumers("a")).To(ContainElement(b))
+			Expect(len(m.Consumers("b"))).To(Equal(1))
+			Expect(m.Consumers("b")).To(ContainElement(c))
 		})
 
 		It("handles multiple consumers", func() {
@@ -51,9 +52,9 @@ var _ = Describe("FunctionMapper", func() {
 
 			m := NewFunctionMapper()(3, fc)
 
-			Expect(len(m["a"].Consumers())).To(Equal(2))
-			Expect(m["a"].Consumers()).To(ContainElement(b))
-			Expect(m["a"].Consumers()).To(ContainElement(c))
+			Expect(len(m.Consumers("a"))).To(Equal(2))
+			Expect(m.Consumers("a")).To(ContainElement(b))
+			Expect(m.Consumers("a")).To(ContainElement(c))
 		})
 
 		It("doesn't just keep the producers/filters that have a consumer", func() {
@@ -70,11 +71,11 @@ var _ = Describe("FunctionMapper", func() {
 
 			m := NewFunctionMapper()(4, fc)
 
-			Expect(len(m)).To(Equal(4))
-			Expect(m["a"]).ToNot(BeNil())
-			Expect(m["b"]).ToNot(BeNil())
-			Expect(m["c"]).ToNot(BeNil())
-			Expect(m["d"]).ToNot(BeNil())
+			Expect(len(m.FunctionNames())).To(Equal(4))
+			Expect(m.Info("a")).ToNot(BeNil())
+			Expect(m.Info("b")).ToNot(BeNil())
+			Expect(m.Info("c")).ToNot(BeNil())
+			Expect(m.Info("d")).ToNot(BeNil())
 		})
 
 		It("panics with a name mismatch", func() {

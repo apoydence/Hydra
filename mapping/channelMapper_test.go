@@ -1,6 +1,7 @@
-package mapping
+package mapping_test
 
 import (
+	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/types"
 
 	. "github.com/onsi/ginkgo"
@@ -42,7 +43,7 @@ var _ = Describe("ChannelMapper", func() {
 			distMap.Add("a", a, createSlice("b"))
 			distMap.Add("b", b, createSlice())
 
-			channelMapper(distMap)
+			NewChannelMapper()(distMap)
 
 			return channelLoad(numOfIns, ins, numOfOuts, outs)
 		}
@@ -116,7 +117,7 @@ var _ = Describe("ChannelMapper", func() {
 				distMap.Add("b", b, createSlice())
 				distMap.Add("c", c, createSlice())
 
-				channelMapper(distMap)
+				NewChannelMapper()(distMap)
 
 				loadsCh := make(chan []float64)
 				setupInLoads(numOfIns, 100, ins)

@@ -4,17 +4,17 @@ import(
 	"github.com/apoydence/hydra/types"
 )
 
-type Distributor func(FunctionMap) types.DistributedFunctionMap
+type Distributor func(types.FunctionMap) types.DistributedFunctionMap
 
 func NewDistributor() Distributor {
 	return distribute
 }
 
-func distribute(m FunctionMap) types.DistributedFunctionMap {
+func distribute(m types.FunctionMap) types.DistributedFunctionMap {
 	dfm := types.NewDistributedMap()
 	resultsChan := make(chan types.FunctionInfo)
-	for _, fm := range m {
-		fi := fm.Info()
+	for _, funcName := range m.FunctionNames() {
+		fi := m.Info(funcName)
 		sf := types.NewSetupFunctionBuilder(fi.Name(), fi.Function(), resultsChan)
 		instances := make([]types.FunctionInfo, 0)
 		instances = append(instances, fi)
@@ -24,7 +24,7 @@ func distribute(m FunctionMap) types.DistributedFunctionMap {
 		}
 
 		consumers := make([]string, 0)
-		for _, f := range fm.Consumers() {
+		for _, f := range m.Consumers(funcName) {
 			consumers = append(consumers, f.Name())
 		}
 

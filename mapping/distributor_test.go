@@ -1,6 +1,7 @@
-package mapping
+package mapping_test
 
 import (
+	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,7 +12,7 @@ var _ = Describe("Distributor", func() {
 	Context("Non-Networked", func() {
 		It("creates n-1 number of instances", func(done Done) {
 			defer close(done)
-			m := make(map[string]Mapper)
+			m := NewFunctionMapBuilder()
 			var count int32
 			count = 0
 
@@ -19,8 +20,8 @@ var _ = Describe("Distributor", func() {
 				atomic.AddInt32(&count, 1)
 				s.AsProducer(1)
 			}
-
-			m["a"] = NewMapper(NewFunctionInfo("a", fake, "", 5, PRODUCER))
+			fia := NewFunctionInfo("a", fake, "", 5, PRODUCER)
+			m.Add(fia)
 			NewDistributor()(m)
 			Eventually(func() int32 { return count }).Should(BeEquivalentTo(4))
 		}, 1)
@@ -35,11 +36,13 @@ var _ = Describe("Distributor", func() {
 				s.AsConsumer("b", 1)
 			}
 
-			m := make(map[string]Mapper)
-			m["a"] = NewMapper(NewFunctionInfo("a", fakeP, "", 5, PRODUCER))
-			m["b"] = NewMapper(NewFunctionInfo("b", fakeC, "", 5, CONSUMER))
-			ma := m["a"].(*mapper)
-			ma.consumers = append(ma.consumers, m["b"].Info())
+
+			m := NewFunctionMapBuilder()
+			fia := NewFunctionInfo("a", fakeP, "", 5, PRODUCER)
+			fib := NewFunctionInfo("b", fakeC, "", 5, CONSUMER)
+			m.Add(fia)
+			m.Add(fib)
+			m.AddConsumer("a", fib)
 			dm := NewDistributor()(m)
 
 			Expect(len(dm.Instances("a"))).To(Equal(5))

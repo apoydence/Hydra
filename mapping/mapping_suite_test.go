@@ -1,4 +1,4 @@
-package mapping
+package mapping_test
 
 import (
 	. "github.com/onsi/ginkgo"
