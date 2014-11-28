@@ -1,6 +1,7 @@
-package types
+package types_test
 
 import (
+	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"reflect"
@@ -83,66 +84,4 @@ var _ = Describe("SetupFunction", func() {
 			Expect(in).To(BeEquivalentTo(fin))
 		}, 1)
 	})
-
-	Context("Interface Implementation", func() {
-		var (
-			fake      *fakeSetupFunction
-			fakeSetup SetupFunction
-		)
-
-		BeforeEach(func() {
-			fake = NewFakeSetupFunction()
-			fakeSetup = setupFunction(fake.setup)
-		})
-
-		Context("AsProducer", func() {
-			It("Returns the correct channel and FunctionType", func() {
-				Expect(fakeSetup.AsProducer(5)).To(Equal(fake.out))
-				Expect(fake.funcType).To(Equal(PRODUCER))
-				Expect(fake.instances).To(Equal(5))
-			})
-		})
-
-		Context("AsFilter", func() {
-			It("Returns the correct channels, FunctionType and parent", func() {
-				in, out := fakeSetup.AsFilter("fakeParent", 5)
-				Expect(in).To(Equal(fake.in))
-				Expect(out).To(Equal(fake.out))
-				Expect(fake.funcType).To(Equal(FILTER))
-				Expect(fake.parent).To(Equal("fakeParent"))
-				Expect(fake.instances).To(Equal(5))
-			})
-		})
-
-		Context("AsConsumer", func() {
-			It("Returns the correct channel, FunctionType, and parent", func() {
-				Expect(fakeSetup.AsConsumer("fakeParent", 5)).To(Equal(fake.in))
-				Expect(fake.funcType).To(Equal(CONSUMER))
-				Expect(fake.parent).To(Equal("fakeParent"))
-				Expect(fake.instances).To(Equal(5))
-			})
-		})
-	})
 })
-
-type fakeSetupFunction struct {
-	parent    string
-	instances int
-	funcType  FunctionType
-	in        ReadOnlyChannel
-	out       WriteOnlyChannel
-}
-
-func NewFakeSetupFunction() *fakeSetupFunction {
-	return &fakeSetupFunction{
-		in:  make(chan HashedData),
-		out: make(chan HashedData),
-	}
-}
-
-func (f *fakeSetupFunction) setup(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
-	f.parent = parent
-	f.instances = instances
-	f.funcType = funcType
-	return f.in, f.out
-}
