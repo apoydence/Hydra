@@ -44,8 +44,10 @@ var _ = Describe("ChannelMapper", func() {
 			distMap.Add("b", b, createSlice())
 
 			NewChannelMapper()(distMap)
+			
+			setupInLoads(numOfIns, 100, ins)
 
-			return channelLoad(numOfIns, ins, numOfOuts, outs)
+			return channelLoad(100, numOfIns, numOfOuts, outs)
 		}
 
 		Context("Single consumer type", func() {
@@ -123,7 +125,7 @@ var _ = Describe("ChannelMapper", func() {
 				setupInLoads(numOfIns, 100, ins)
 
 				fetchLoads := func(loadsCh chan []float64, outs chan ReadOnlyChannel) {
-					loadsCh <- channelLoad2(100, numOfIns, numOfOuts, outs)
+					loadsCh <- channelLoad(100, numOfIns, numOfOuts, outs)
 				}
 
 				go fetchLoads(loadsCh, outsB)
@@ -192,17 +194,7 @@ func createSlice(names ...string) []string {
 	return result
 }
 
-func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs chan ReadOnlyChannel) []float64 {
-	for i := 0; i < insCount; i++ {
-		in := <-ins
-		go func(in WriteOnlyChannel) {
-			defer close(in)
-			for i := 0; i < 100; i++ {
-				in <- NewHashedData(i, i)
-			}
-		}(in)
-	}
-
+func channelLoad(count, insCount, outsCount int, outs chan ReadOnlyChannel) []float64 {
 	loads := make([]float64, 0)
 
 	outSlice := make([]ReadOnlyChannel, 0)
@@ -211,13 +203,13 @@ func channelLoad(insCount int, ins chan WriteOnlyChannel, outsCount int, outs ch
 		loads = append(loads, 0)
 	}
 
-	for i := 0; i < insCount*100; i++ {
+	for i := 0; i < insCount*count; i++ {
 		<-outSlice[i%outsCount]
 		loads[i%outsCount]++
 	}
 
 	for i, v := range loads {
-		loads[i] = v / 100
+		loads[i] = v / float64(count)
 	}
 
 	return loads
@@ -233,25 +225,4 @@ func setupInLoads(insCount, count int, ins chan WriteOnlyChannel) {
 			}
 		}(in)
 	}
-}
-
-func channelLoad2(count, insCount, outsCount int, outs chan ReadOnlyChannel) []float64 {
-	loads := make([]float64, 0)
-
-	outSlice := make([]ReadOnlyChannel, 0)
-	for i := 0; i < outsCount; i++ {
-		outSlice = append(outSlice, <-outs)
-		loads = append(loads, 0)
-	}
-
-	for i := 0; i < count*insCount; i++ {
-		<-outSlice[i%outsCount]
-		loads[i%outsCount]++
-	}
-
-	for i, v := range loads {
-		loads[i] = v / float64(count)
-	}
-
-	return loads
 }
