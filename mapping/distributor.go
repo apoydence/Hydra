@@ -1,6 +1,6 @@
 package mapping
 
-import(
+import (
 	"github.com/apoydence/hydra/types"
 )
 

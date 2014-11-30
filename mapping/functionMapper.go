@@ -8,7 +8,7 @@ import (
 
 type FunctionMapper func(numOfFunctions int, functionChan <-chan types.FunctionInfo) types.FunctionMap
 
-func NewFunctionMapper() FunctionMapper{
+func NewFunctionMapper() FunctionMapper {
 	return mapFunctions
 }
 

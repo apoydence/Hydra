@@ -16,7 +16,7 @@ var _ = Describe("FunctionInvoker", func() {
 		var (
 			fakeSetupBuilder SetupFunctionBuilder
 			fakeSetup        SetupFunction
-			functionInvoker	 FunctionInvoker
+			functionInvoker  FunctionInvoker
 		)
 
 		fakeSetupComparer := func(s SetupFunction) bool {
@@ -46,7 +46,7 @@ var _ = Describe("FunctionInvoker", func() {
 			fake := func(sf SetupFunction) {
 				countChan <- nil
 			}
-	
+
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
 			for i := 0; i < 3; i++ {
 				<-countChan
@@ -102,17 +102,17 @@ func tryRead(c chan interface{}) bool {
 	}
 }
 
-type fakeSetupFunction struct{
+type fakeSetupFunction struct {
 }
 
-func (f *fakeSetupFunction) AsProducer(instances int) WriteOnlyChannel{
+func (f *fakeSetupFunction) AsProducer(instances int) WriteOnlyChannel {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) AsFilter(parent string, instances int) (ReadOnlyChannel, WriteOnlyChannel){
+func (f *fakeSetupFunction) AsFilter(parent string, instances int) (ReadOnlyChannel, WriteOnlyChannel) {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel{
+func (f *fakeSetupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel {
 	panic("Not intended to be called")
 }

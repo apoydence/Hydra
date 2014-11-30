@@ -1,9 +1,9 @@
 package hydra
 
-import(
-	"github.com/apoydence/hydra/types"
+import (
 	"github.com/apoydence/hydra/functionHandlers"
 	"github.com/apoydence/hydra/mapping"
+	"github.com/apoydence/hydra/types"
 )
 
 type Scaffolding func(fs ...func(types.SetupFunction))

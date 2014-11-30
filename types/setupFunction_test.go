@@ -1,11 +1,11 @@
 package types_test
 
 import (
+	"encoding"
 	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"reflect"
-	"encoding"
 )
 
 var _ = Describe("SetupFunction", func() {

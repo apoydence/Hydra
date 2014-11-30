@@ -1,13 +1,13 @@
 package mapping
 
-import(
-	"github.com/apoydence/hydra/types"
+import (
 	"encoding"
+	"github.com/apoydence/hydra/types"
 )
 
 type ChannelMapper func(m types.DistributedFunctionMap)
 
-func NewChannelMapper() ChannelMapper{
+func NewChannelMapper() ChannelMapper {
 	return channelMapper
 }
 
@@ -35,7 +35,7 @@ func channelMapper(m types.DistributedFunctionMap) {
 	}
 }
 
-func createChannels(count int) []chan encoding.BinaryMarshaler{
+func createChannels(count int) []chan encoding.BinaryMarshaler {
 	results := make([]chan encoding.BinaryMarshaler, 0)
 	for i := 0; i < count; i++ {
 		results = append(results, make(chan encoding.BinaryMarshaler))
@@ -65,7 +65,7 @@ func setReadChannels(consumerInstances []types.FunctionInfo, cs []chan encoding.
 	}
 }
 
-func cloneProducerChannels(numOfConsumers int, producerCh []chan encoding.BinaryMarshaler) [][]chan encoding.BinaryMarshaler{
+func cloneProducerChannels(numOfConsumers int, producerCh []chan encoding.BinaryMarshaler) [][]chan encoding.BinaryMarshaler {
 	result := make([][]chan encoding.BinaryMarshaler, 0)
 
 	for i := 0; i < numOfConsumers; i++ {
@@ -115,7 +115,7 @@ func setReadChannelsGreater(instances []types.FunctionInfo, cs []chan encoding.B
 	}
 }
 
-func channelCombiner(consumerCount int, cs []chan encoding.BinaryMarshaler) []chan encoding.BinaryMarshaler{
+func channelCombiner(consumerCount int, cs []chan encoding.BinaryMarshaler) []chan encoding.BinaryMarshaler {
 	result := make([]chan encoding.BinaryMarshaler, 0)
 	doneChs := make([]chan interface{}, 0)
 	counts := make([]int, 0)

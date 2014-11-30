@@ -9,7 +9,7 @@ import (
 
 type FunctionInvoker func(sf types.SetupFunctionBuilder, fs ...func(types.SetupFunction)) <-chan types.FunctionInfo
 
-func NewFunctionInvoker() FunctionInvoker{
+func NewFunctionInvoker() FunctionInvoker {
 	return funcInvoker
 }
 

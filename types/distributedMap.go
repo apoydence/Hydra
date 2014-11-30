@@ -7,7 +7,7 @@ type DistributedFunctionMap interface {
 }
 
 type DistributedFunctionMapBuilder interface {
-	DistributedFunctionMap 
+	DistributedFunctionMap
 	Add(funcName string, instances []FunctionInfo, consumers []string)
 }
 

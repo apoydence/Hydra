@@ -36,7 +36,6 @@ var _ = Describe("Distributor", func() {
 				s.AsConsumer("b", 1)
 			}
 
-
 			m := NewFunctionMapBuilder()
 			fia := NewFunctionInfo("a", fakeP, "", 5, PRODUCER)
 			fib := NewFunctionInfo("b", fakeC, "", 5, CONSUMER)
