@@ -1,20 +1,20 @@
 package mapping_test
 
 import (
+	"encoding"
 	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/testing_helpers"
 	. "github.com/apoydence/hydra/types"
-	"encoding"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("ChannelMapper", func() {
-	var fakeChanCreator ChannelCreator = func(bufferSize int) chan encoding.BinaryMarshaler{
+	var fakeChanCreator ChannelCreator = func(bufferSize int) chan encoding.BinaryMarshaler {
 		return make(chan encoding.BinaryMarshaler, bufferSize)
 	}
-	
+
 	Context("With multiple instances", func() {
 
 		setupTest := func(numOfIns, numOfOuts int) []float64 {

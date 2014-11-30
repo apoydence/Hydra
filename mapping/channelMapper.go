@@ -14,7 +14,7 @@ func NewChannelMapper(chanCreator ChannelCreator) ChannelMapper {
 	return cm.channelMapper
 }
 
-type chMapper struct{
+type chMapper struct {
 	chanCreator ChannelCreator
 }
 
