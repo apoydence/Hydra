@@ -1,6 +1,7 @@
 package mapping_test
 
 import (
+	. "github.com/apoydence/hydra/testing_helpers"
 	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/types"
 
@@ -221,7 +222,7 @@ func setupInLoads(insCount, count int, ins chan WriteOnlyChannel) {
 		go func(in WriteOnlyChannel) {
 			defer close(in)
 			for i := 0; i < count; i++ {
-				in <- NewHashedData(i, i)
+				in <- NewIntMarshaler(i)
 			}
 		}(in)
 	}

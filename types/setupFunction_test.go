@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"reflect"
+	"encoding"
 )
 
 var _ = Describe("SetupFunction", func() {
@@ -19,8 +20,8 @@ var _ = Describe("SetupFunction", func() {
 
 			fake := func(s SetupFunction) {}
 			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
-			fakeIn := make(chan HashedData)
-			fakeOut := make(chan HashedData)
+			fakeIn := make(chan encoding.BinaryMarshaler)
+			fakeOut := make(chan encoding.BinaryMarshaler)
 
 			go func() {
 				defer GinkgoRecover()
@@ -51,7 +52,7 @@ var _ = Describe("SetupFunction", func() {
 			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
 
 			var fout WriteOnlyChannel
-			fakeOut := make(chan HashedData)
+			fakeOut := make(chan encoding.BinaryMarshaler)
 			fout = fakeOut
 
 			go func() {
@@ -71,7 +72,7 @@ var _ = Describe("SetupFunction", func() {
 			f := NewSetupFunctionBuilder("someName", fake, resultsChan)
 
 			var fin ReadOnlyChannel
-			fakeIn := make(chan HashedData)
+			fakeIn := make(chan encoding.BinaryMarshaler)
 			fin = fakeIn
 
 			go func() {
