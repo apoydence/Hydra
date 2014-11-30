@@ -2,9 +2,6 @@ package types
 
 type FunctionType int
 
-type ReadOnlyChannel <-chan HashedData
-type WriteOnlyChannel chan<- HashedData
-
 type SetupFunction interface {
 	AsProducer(instances int) WriteOnlyChannel
 	AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel)
