@@ -4,12 +4,17 @@ import (
 	. "github.com/apoydence/hydra/mapping"
 	. "github.com/apoydence/hydra/testing_helpers"
 	. "github.com/apoydence/hydra/types"
+	"encoding"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("ChannelMapper", func() {
+	var fakeChanCreator ChannelCreator = func(bufferSize int) chan encoding.BinaryMarshaler{
+		return make(chan encoding.BinaryMarshaler, bufferSize)
+	}
+	
 	Context("With multiple instances", func() {
 
 		setupTest := func(numOfIns, numOfOuts int) []float64 {
@@ -44,7 +49,7 @@ var _ = Describe("ChannelMapper", func() {
 			distMap.Add("a", a, createSlice("b"))
 			distMap.Add("b", b, createSlice())
 
-			NewChannelMapper()(distMap)
+			NewChannelMapper(fakeChanCreator)(distMap)
 
 			setupInLoads(numOfIns, 100, ins)
 
@@ -120,7 +125,7 @@ var _ = Describe("ChannelMapper", func() {
 				distMap.Add("b", b, createSlice())
 				distMap.Add("c", c, createSlice())
 
-				NewChannelMapper()(distMap)
+				NewChannelMapper(fakeChanCreator)(distMap)
 
 				loadsCh := make(chan []float64)
 				setupInLoads(numOfIns, 100, ins)

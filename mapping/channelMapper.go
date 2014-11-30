@@ -7,38 +7,45 @@ import (
 
 type ChannelMapper func(m types.DistributedFunctionMap)
 
-func NewChannelMapper() ChannelMapper {
-	return channelMapper
+func NewChannelMapper(chanCreator ChannelCreator) ChannelMapper {
+	cm := &chMapper{
+		chanCreator: chanCreator,
+	}
+	return cm.channelMapper
 }
 
-func channelMapper(m types.DistributedFunctionMap) {
+type chMapper struct{
+	chanCreator ChannelCreator
+}
+
+func (cm *chMapper) channelMapper(m types.DistributedFunctionMap) {
 	for _, funcName := range m.Functions() {
 		instances := m.Instances(funcName)
 		if instances[0].FuncType() == types.CONSUMER {
 			continue
 		}
 
-		cs := createChannels(len(instances))
+		cs := cm.createChannels(len(instances))
 		go setWriteChannels(m.Instances(funcName), cs)
 
 		consumers := m.Consumers(funcName)
 		numberOfConsumers := len(consumers)
 
 		if numberOfConsumers == 1 {
-			setReadChannels(m.Instances(consumers[0]), cs)
+			cm.setReadChannels(m.Instances(consumers[0]), cs)
 		} else if numberOfConsumers > 1 {
-			cloneMatrix := cloneProducerChannels(numberOfConsumers, cs)
+			cloneMatrix := cm.cloneProducerChannels(numberOfConsumers, cs)
 			for i, cloneCs := range cloneMatrix {
-				setReadChannels(m.Instances(consumers[i]), cloneCs)
+				cm.setReadChannels(m.Instances(consumers[i]), cloneCs)
 			}
 		}
 	}
 }
 
-func createChannels(count int) []chan encoding.BinaryMarshaler {
+func (cm *chMapper) createChannels(count int) []chan encoding.BinaryMarshaler {
 	results := make([]chan encoding.BinaryMarshaler, 0)
 	for i := 0; i < count; i++ {
-		results = append(results, make(chan encoding.BinaryMarshaler))
+		results = append(results, cm.chanCreator(0))
 	}
 	return results
 }
@@ -51,7 +58,7 @@ func setWriteChannels(instances []types.FunctionInfo, cs []chan encoding.BinaryM
 	}
 }
 
-func setReadChannels(consumerInstances []types.FunctionInfo, cs []chan encoding.BinaryMarshaler) {
+func (cm *chMapper) setReadChannels(consumerInstances []types.FunctionInfo, cs []chan encoding.BinaryMarshaler) {
 	consumerLength := len(consumerInstances)
 	producerLength := len(cs)
 
@@ -60,18 +67,18 @@ func setReadChannels(consumerInstances []types.FunctionInfo, cs []chan encoding.
 	} else if consumerLength > producerLength {
 		go setReadChannelsGreater(consumerInstances, cs)
 	} else {
-		combinedCs := channelCombiner(consumerLength, cs)
+		combinedCs := cm.channelCombiner(consumerLength, cs)
 		go setReadChannelsEqual(consumerInstances, combinedCs)
 	}
 }
 
-func cloneProducerChannels(numOfConsumers int, producerCh []chan encoding.BinaryMarshaler) [][]chan encoding.BinaryMarshaler {
+func (cm *chMapper) cloneProducerChannels(numOfConsumers int, producerCh []chan encoding.BinaryMarshaler) [][]chan encoding.BinaryMarshaler {
 	result := make([][]chan encoding.BinaryMarshaler, 0)
 
 	for i := 0; i < numOfConsumers; i++ {
 		result = append(result, make([]chan encoding.BinaryMarshaler, 0))
 		for _ = range producerCh {
-			clonedCh := make(chan encoding.BinaryMarshaler)
+			clonedCh := cm.chanCreator(0)
 			result[i] = append(result[i], clonedCh)
 		}
 	}
@@ -115,13 +122,13 @@ func setReadChannelsGreater(instances []types.FunctionInfo, cs []chan encoding.B
 	}
 }
 
-func channelCombiner(consumerCount int, cs []chan encoding.BinaryMarshaler) []chan encoding.BinaryMarshaler {
+func (cm *chMapper) channelCombiner(consumerCount int, cs []chan encoding.BinaryMarshaler) []chan encoding.BinaryMarshaler {
 	result := make([]chan encoding.BinaryMarshaler, 0)
 	doneChs := make([]chan interface{}, 0)
 	counts := make([]int, 0)
 
 	for i := 0; i < consumerCount; i++ {
-		result = append(result, make(chan encoding.BinaryMarshaler))
+		result = append(result, cm.chanCreator(0))
 		doneChs = append(doneChs, make(chan interface{}))
 		counts = append(counts, 0)
 	}

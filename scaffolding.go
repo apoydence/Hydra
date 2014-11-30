@@ -14,7 +14,8 @@ func NewSetupScaffolding() Scaffolding {
 		funcInvoker := functionHandlers.NewFunctionInvoker()
 		funcMapper := mapping.NewFunctionMapper()
 		distributor := mapping.NewDistributor()
-		chMapper := mapping.NewChannelMapper()
+		chCreator := mapping.NewChannelCreator()
+		chMapper := mapping.NewChannelMapper(chCreator)
 
 		chanFuncInfo := funcInvoker(buildSetup, fs...)
 		fmap := funcMapper(len(fs), chanFuncInfo)
