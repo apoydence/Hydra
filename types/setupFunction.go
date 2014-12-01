@@ -3,12 +3,24 @@ package types
 type FunctionType int
 
 type SetupFunction interface {
-	AsProducer(instances int) WriteOnlyChannel
-	AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel)
-	AsConsumer(parent string, instances int) ReadOnlyChannel
+	AsProducer() ProducerBuilder
+	AsFilter(parent string) FilterBuilder
+	AsConsumer(parent string) ConsumerBuilder
+	Instances(count int) SetupFunction
+	WriteBufferSize(count int) SetupFunction
 }
 
-type setupFunction func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel)
+type ProducerBuilder interface{
+	Build() WriteOnlyChannel
+}
+
+type FilterBuilder interface{
+	Build() (in ReadOnlyChannel, out WriteOnlyChannel)
+}
+
+type ConsumerBuilder interface{
+	Build() ReadOnlyChannel
+}
 
 type SetupFunctionBuilder func(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction
 
@@ -18,6 +30,36 @@ const (
 	CONSUMER
 )
 
+type setup struct{
+	name string
+	fs func(SetupFunction)
+	funcInfoChan chan FunctionInfo
+	instances int
+	bufferSize int
+}
+
+type setupProducer struct{
+	s *setup
+}
+
+type setupFilter struct{
+	s *setup
+	parent string
+}
+
+type setupConsumer struct{
+	s *setup
+	parent string
+}
+
+func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction{
+	return &setup{
+		name: name,
+		fs: f,
+		funcInfoChan: c,
+	}
+}
+/*
 func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
 	var setupF setupFunction
 	setupF = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
@@ -38,18 +80,54 @@ func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan Function
 	}
 	return setupF
 }
-
-func (sf setupFunction) AsProducer(instances int) WriteOnlyChannel {
-	_, out := sf("", instances, PRODUCER)
-	return out
+*/
+func (s *setup) AsProducer() ProducerBuilder{
+	return &setupProducer{
+		s: s,
+	}
 }
 
-func (sf setupFunction) AsFilter(parent string, instances int) (in ReadOnlyChannel, out WriteOnlyChannel) {
-	in, out = sf(parent, instances, FILTER)
-	return
+func (s *setup) AsFilter(parent string) FilterBuilder{
+	return &setupFilter{
+		s: s,
+		parent: parent,
+	}
 }
 
-func (sf setupFunction) AsConsumer(parent string, instances int) ReadOnlyChannel {
-	in, _ := sf(parent, instances, CONSUMER)
-	return in
+func (s *setup) AsConsumer(parent string) ConsumerBuilder{
+	return &setupConsumer{
+		s: s,
+		parent: parent,
+	}
+}
+
+func (s *setup) Instances(count int) SetupFunction{
+	s.instances = count
+	return s
+}
+
+func (s *setup) WriteBufferSize(count int) SetupFunction{
+	s.bufferSize = count
+	return s
+}
+
+func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
+	fi := NewFunctionInfo(s.name, s.fs, parent, s.instances, funcType)
+	s.funcInfoChan <- fi
+	return fi
+}
+
+func (sp *setupProducer) Build() WriteOnlyChannel{
+	fi := submitFuncInfo(sp.s, "", PRODUCER)
+	return <-fi.WriteChan()
+}
+
+func (sp *setupFilter) Build() (ReadOnlyChannel, WriteOnlyChannel){
+	fi := submitFuncInfo(sp.s, sp.parent, FILTER)
+	return <-fi.ReadChan(), <-fi.WriteChan()
+}
+
+func (sp *setupConsumer) Build() ReadOnlyChannel{
+	fi := submitFuncInfo(sp.s, sp.parent, CONSUMER)
+	return <-fi.ReadChan()
 }
