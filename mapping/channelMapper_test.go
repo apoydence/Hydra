@@ -22,11 +22,11 @@ var _ = Describe("ChannelMapper", func() {
 			outs := make(chan ReadOnlyChannel)
 
 			fa := func(sf SetupFunction) {
-				ins <- sf.AsProducer(numOfIns)
+				ins <- sf.Instances(numOfIns).AsProducer().Build()
 			}
 
 			fb := func(sf SetupFunction) {
-				outs <- sf.AsConsumer("", numOfOuts)
+				outs <- sf.Instances(numOfOuts).AsConsumer("").Build()
 			}
 
 			fca := make(chan FunctionInfo)
@@ -88,15 +88,15 @@ var _ = Describe("ChannelMapper", func() {
 				outsC := make(chan ReadOnlyChannel)
 
 				fa := func(sf SetupFunction) {
-					ins <- sf.AsProducer(numOfIns)
+					ins <- sf.Instances(numOfIns).AsProducer().Build()
 				}
 
 				fb := func(sf SetupFunction) {
-					outsB <- sf.AsConsumer("", numOfOuts)
+					outsB <- sf.Instances(numOfOuts).AsConsumer("").Build()
 				}
 
 				fc := func(sf SetupFunction) {
-					outsC <- sf.AsConsumer("", numOfOuts)
+					outsC <- sf.Instances(numOfOuts).AsConsumer("").Build()
 				}
 
 				fca := make(chan FunctionInfo)

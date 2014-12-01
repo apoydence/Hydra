@@ -87,7 +87,7 @@ var _ = Describe("Scaffolding", func() {
 })
 
 func producer(s SetupFunction) {
-	out := s.AsProducer(1)
+	out := s.AsProducer().Build()
 	defer close(out)
 	for i := 0; i < 10; i++ {
 		out <- NewIntMarshaler(i)
@@ -95,7 +95,7 @@ func producer(s SetupFunction) {
 }
 
 func filter(s SetupFunction) {
-	in, out := s.AsFilter("github.com/apoydence/hydra_test.producer", 10)
+	in, out := s.Instances(10).AsFilter("github.com/apoydence/hydra_test.producer").Build()
 	defer close(out)
 
 	for data := range in {
@@ -104,7 +104,7 @@ func filter(s SetupFunction) {
 }
 
 func filter2(s SetupFunction) {
-	in, out := s.AsFilter("github.com/apoydence/hydra_test.producer", 5)
+	in, out := s.Instances(5).AsFilter("github.com/apoydence/hydra_test.producer").Build()
 	defer close(out)
 
 	for data := range in {
@@ -118,7 +118,7 @@ func consumer(s SetupFunction, count int, results WriteOnlyChannel, doneChan cha
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.AsConsumer("github.com/apoydence/hydra_test.filter", count)
+	in := s.Instances(count).AsConsumer("github.com/apoydence/hydra_test.filter").Build()
 	for data := range in {
 		results <- data
 	}
@@ -128,7 +128,7 @@ func consumer2(s SetupFunction, count int, results WriteOnlyChannel, doneChan ch
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.AsConsumer("github.com/apoydence/hydra_test.filter2", count)
+	in := s.Instances(count).AsConsumer("github.com/apoydence/hydra_test.filter2").Build()
 	for data := range in {
 		results <- data
 	}

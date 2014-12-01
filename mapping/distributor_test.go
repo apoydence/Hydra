@@ -18,7 +18,7 @@ var _ = Describe("Distributor", func() {
 
 			fake := func(s SetupFunction) {
 				atomic.AddInt32(&count, 1)
-				s.AsProducer(1)
+				s.AsProducer().Build()
 			}
 			fia := NewFunctionInfo("a", fake, "", 5, PRODUCER)
 			m.Add(fia)
@@ -29,11 +29,11 @@ var _ = Describe("Distributor", func() {
 		It("stores each FunctionInfo for each instance with the proper mapping", func(done Done) {
 			defer close(done)
 			fakeP := func(s SetupFunction) {
-				s.AsProducer(1)
+				s.AsProducer().Build()
 			}
 
 			fakeC := func(s SetupFunction) {
-				s.AsConsumer("b", 1)
+				s.AsConsumer("b").Build()
 			}
 
 			m := NewFunctionMapBuilder()

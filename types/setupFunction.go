@@ -1,5 +1,7 @@
 package types
 
+import "sync/atomic"
+
 type FunctionType int
 
 type SetupFunction interface {
@@ -7,7 +9,9 @@ type SetupFunction interface {
 	AsFilter(parent string) FilterBuilder
 	AsConsumer(parent string) ConsumerBuilder
 	Instances(count int) SetupFunction
+	GetInstances() int
 	WriteBufferSize(count int) SetupFunction
+	GetWriteBufferSize() int
 }
 
 type ProducerBuilder interface{
@@ -34,8 +38,8 @@ type setup struct{
 	name string
 	fs func(SetupFunction)
 	funcInfoChan chan FunctionInfo
-	instances int
-	bufferSize int
+	instances int32
+	bufferSize int32
 }
 
 type setupProducer struct{
@@ -57,30 +61,11 @@ func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan Function
 		name: name,
 		fs: f,
 		funcInfoChan: c,
+		instances: 1,
+		bufferSize: 0,
 	}
 }
-/*
-func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
-	var setupF setupFunction
-	setupF = func(parent string, instances int, funcType FunctionType) (in ReadOnlyChannel, out WriteOnlyChannel) {
 
-		fi := NewFunctionInfo(name, f, parent, instances, funcType)
-		c <- fi
-
-		switch funcType {
-		case PRODUCER:
-			return nil, <-fi.WriteChan()
-		case FILTER:
-			return <-fi.ReadChan(), <-fi.WriteChan()
-		case CONSUMER:
-			return <-fi.ReadChan(), nil
-		default:
-			panic("Invalid type: " + string(funcType))
-		}
-	}
-	return setupF
-}
-*/
 func (s *setup) AsProducer() ProducerBuilder{
 	return &setupProducer{
 		s: s,
@@ -102,17 +87,25 @@ func (s *setup) AsConsumer(parent string) ConsumerBuilder{
 }
 
 func (s *setup) Instances(count int) SetupFunction{
-	s.instances = count
+	atomic.StoreInt32(&s.instances, int32(count))
 	return s
+}
+
+func (s *setup) GetInstances() int{
+	return int(atomic.LoadInt32(&s.instances))
 }
 
 func (s *setup) WriteBufferSize(count int) SetupFunction{
-	s.bufferSize = count
+	atomic.StoreInt32(&s.bufferSize, int32(count))
 	return s
 }
 
+func (s *setup) GetWriteBufferSize() int{
+	return int(atomic.LoadInt32(&s.bufferSize))
+}
+
 func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
-	fi := NewFunctionInfo(s.name, s.fs, parent, s.instances, funcType)
+	fi := NewFunctionInfo(s.name, s.fs, parent, s.GetInstances(), funcType)
 	s.funcInfoChan <- fi
 	return fi
 }
