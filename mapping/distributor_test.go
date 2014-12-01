@@ -20,7 +20,7 @@ var _ = Describe("Distributor", func() {
 				atomic.AddInt32(&count, 1)
 				s.AsProducer().Build()
 			}
-			fia := NewFunctionInfo("a", fake, "", 5, PRODUCER)
+			fia := NewFunctionInfo("a", fake, "", 5, 0, PRODUCER)
 			m.Add(fia)
 			NewDistributor()(m)
 			Eventually(func() int32 { return count }).Should(BeEquivalentTo(4))
@@ -37,8 +37,8 @@ var _ = Describe("Distributor", func() {
 			}
 
 			m := NewFunctionMapBuilder()
-			fia := NewFunctionInfo("a", fakeP, "", 5, PRODUCER)
-			fib := NewFunctionInfo("b", fakeC, "", 5, CONSUMER)
+			fia := NewFunctionInfo("a", fakeP, "", 5, 0, PRODUCER)
+			fib := NewFunctionInfo("b", fakeC, "", 5, 0, CONSUMER)
 			m.Add(fia)
 			m.Add(fib)
 			m.AddConsumer("a", fib)

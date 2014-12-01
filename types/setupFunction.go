@@ -105,7 +105,7 @@ func (s *setup) GetWriteBufferSize() int{
 }
 
 func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
-	fi := NewFunctionInfo(s.name, s.fs, parent, s.GetInstances(), funcType)
+	fi := NewFunctionInfo(s.name, s.fs, parent, s.GetInstances(), s.GetWriteBufferSize(), funcType)
 	s.funcInfoChan <- fi
 	return fi
 }
