@@ -3,7 +3,7 @@ Hydra
 
 Framework to create distributed calculations.
 
-This framework is in the early stages and currently does not support distribution.  Currently the framework links several functions together, but does not handle parallelization.  Parallelizing is the next step.
+This framework is in the early stages and currently does not yet support distribution.  The framework links several functions together and can create several instances of each function.
 
 How It Works
 ============
