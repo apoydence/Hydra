@@ -105,30 +105,30 @@ func tryRead(c chan interface{}) bool {
 type fakeSetupFunction struct {
 }
 
-func (f *fakeSetupFunction) AsProducer() ProducerBuilder{
+func (f *fakeSetupFunction) AsProducer() ProducerBuilder {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) AsFilter(parent string) FilterBuilder{
+func (f *fakeSetupFunction) AsFilter(parent string) FilterBuilder {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) AsConsumer(parent string) ConsumerBuilder{
+func (f *fakeSetupFunction) AsConsumer(parent string) ConsumerBuilder {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) Instances(count int) SetupFunction{
+func (f *fakeSetupFunction) Instances(count int) SetupFunction {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) GetInstances() int{
+func (f *fakeSetupFunction) GetInstances() int {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) WriteBufferSize(count int) SetupFunction{
+func (f *fakeSetupFunction) WriteBufferSize(count int) SetupFunction {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) GetWriteBufferSize() int{
+func (f *fakeSetupFunction) GetWriteBufferSize() int {
 	panic("Not intended to be called")
 }

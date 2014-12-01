@@ -14,15 +14,15 @@ type SetupFunction interface {
 	GetWriteBufferSize() int
 }
 
-type ProducerBuilder interface{
+type ProducerBuilder interface {
 	Build() WriteOnlyChannel
 }
 
-type FilterBuilder interface{
+type FilterBuilder interface {
 	Build() (in ReadOnlyChannel, out WriteOnlyChannel)
 }
 
-type ConsumerBuilder interface{
+type ConsumerBuilder interface {
 	Build() ReadOnlyChannel
 }
 
@@ -34,73 +34,73 @@ const (
 	CONSUMER
 )
 
-type setup struct{
-	name string
-	fs func(SetupFunction)
+type setup struct {
+	name         string
+	fs           func(SetupFunction)
 	funcInfoChan chan FunctionInfo
-	instances int32
-	bufferSize int32
+	instances    int32
+	bufferSize   int32
 }
 
-type setupProducer struct{
+type setupProducer struct {
 	s *setup
 }
 
-type setupFilter struct{
-	s *setup
+type setupFilter struct {
+	s      *setup
 	parent string
 }
 
-type setupConsumer struct{
-	s *setup
+type setupConsumer struct {
+	s      *setup
 	parent string
 }
 
-func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction{
+func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
 	return &setup{
-		name: name,
-		fs: f,
+		name:         name,
+		fs:           f,
 		funcInfoChan: c,
-		instances: 1,
-		bufferSize: 0,
+		instances:    1,
+		bufferSize:   0,
 	}
 }
 
-func (s *setup) AsProducer() ProducerBuilder{
+func (s *setup) AsProducer() ProducerBuilder {
 	return &setupProducer{
 		s: s,
 	}
 }
 
-func (s *setup) AsFilter(parent string) FilterBuilder{
+func (s *setup) AsFilter(parent string) FilterBuilder {
 	return &setupFilter{
-		s: s,
+		s:      s,
 		parent: parent,
 	}
 }
 
-func (s *setup) AsConsumer(parent string) ConsumerBuilder{
+func (s *setup) AsConsumer(parent string) ConsumerBuilder {
 	return &setupConsumer{
-		s: s,
+		s:      s,
 		parent: parent,
 	}
 }
 
-func (s *setup) Instances(count int) SetupFunction{
+func (s *setup) Instances(count int) SetupFunction {
 	atomic.StoreInt32(&s.instances, int32(count))
 	return s
 }
 
-func (s *setup) GetInstances() int{
+func (s *setup) GetInstances() int {
 	return int(atomic.LoadInt32(&s.instances))
 }
 
-func (s *setup) WriteBufferSize(count int) SetupFunction{
+func (s *setup) WriteBufferSize(count int) SetupFunction {
 	atomic.StoreInt32(&s.bufferSize, int32(count))
 	return s
 }
 
-func (s *setup) GetWriteBufferSize() int{
+func (s *setup) GetWriteBufferSize() int {
 	return int(atomic.LoadInt32(&s.bufferSize))
 }
 
@@ -110,17 +110,17 @@ func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo
 	return fi
 }
 
-func (sp *setupProducer) Build() WriteOnlyChannel{
+func (sp *setupProducer) Build() WriteOnlyChannel {
 	fi := submitFuncInfo(sp.s, "", PRODUCER)
 	return <-fi.WriteChan()
 }
 
-func (sp *setupFilter) Build() (ReadOnlyChannel, WriteOnlyChannel){
+func (sp *setupFilter) Build() (ReadOnlyChannel, WriteOnlyChannel) {
 	fi := submitFuncInfo(sp.s, sp.parent, FILTER)
 	return <-fi.ReadChan(), <-fi.WriteChan()
 }
 
-func (sp *setupConsumer) Build() ReadOnlyChannel{
+func (sp *setupConsumer) Build() ReadOnlyChannel {
 	fi := submitFuncInfo(sp.s, sp.parent, CONSUMER)
 	return <-fi.ReadChan()
 }
