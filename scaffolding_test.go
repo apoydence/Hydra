@@ -68,12 +68,13 @@ var _ = Describe("Scaffolding", func() {
 			go NewSetupScaffolding()(producer, filter, filter2, wrapperConsumer1, wrapperConsumer2)
 
 			go func() {
-				expectedIndex := 0
+				defer GinkgoRecover()
 				expectedData := [...]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+				rxData := make([]int, 0)
 				for data := range results1 {
-					Expect(expectedData[expectedIndex]).To(Equal(data.(IntMarshaler).Number))
-					expectedIndex++
+					rxData = append(rxData, data.(IntMarshaler).Number)
 				}
+				Expect(rxData).To(ConsistOf(expectedData))
 			}()
 
 			expectedData := [...]int{0, 2, 4, 6, 8}
@@ -87,7 +88,7 @@ var _ = Describe("Scaffolding", func() {
 })
 
 func producer(s SetupFunction) {
-	out := s.AsProducer().Build()
+	out := s.WriteBufferSize(5).AsProducer().Build()
 	defer close(out)
 	for i := 0; i < 10; i++ {
 		out <- NewIntMarshaler(i)
