@@ -15,7 +15,7 @@ type SetupFunction interface {
 	Instances() int
 	SetWriteBufferSize(count int) SetupFunction
 	WriteBufferSize() int
-	SetName(name string)
+	SetName(name string) SetupFunction
 	Name() string
 }
 
@@ -117,10 +117,11 @@ func (s *setup) Name() string{
 	return s.name
 }
 
-func (s *setup) SetName(name string) {
+func (s *setup) SetName(name string) SetupFunction{
 	defer s.rwLock.RUnlock()
 	s.rwLock.RLock()
 	s.name = name
+	return s
 }
 
 func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
