@@ -117,18 +117,26 @@ func (f *fakeSetupFunction) AsConsumer(parent string) ConsumerBuilder {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) Instances(count int) SetupFunction {
+func (f *fakeSetupFunction) SetInstances(count int) SetupFunction {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) GetInstances() int {
+func (f *fakeSetupFunction) Instances() int {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) WriteBufferSize(count int) SetupFunction {
+func (f *fakeSetupFunction) SetWriteBufferSize(count int) SetupFunction {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) GetWriteBufferSize() int {
+func (f *fakeSetupFunction) WriteBufferSize() int {
+	panic("Not intended to be called")
+}
+
+func (f *fakeSetupFunction) SetName(name string) {
+	panic("Not intended to be called")
+}
+
+func (f *fakeSetupFunction) Name() string{
 	panic("Not intended to be called")
 }

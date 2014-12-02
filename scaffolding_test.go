@@ -88,7 +88,7 @@ var _ = Describe("Scaffolding", func() {
 })
 
 func producer(s SetupFunction) {
-	out := s.WriteBufferSize(5).AsProducer().Build()
+	out := s.SetWriteBufferSize(5).AsProducer().Build()
 	defer close(out)
 	for i := 0; i < 10; i++ {
 		out <- NewIntMarshaler(i)
@@ -96,7 +96,7 @@ func producer(s SetupFunction) {
 }
 
 func filter(s SetupFunction) {
-	in, out := s.Instances(10).AsFilter("github.com/apoydence/hydra_test.producer").Build()
+	in, out := s.SetInstances(10).AsFilter("github.com/apoydence/hydra_test.producer").Build()
 	defer close(out)
 
 	for data := range in {
@@ -105,7 +105,7 @@ func filter(s SetupFunction) {
 }
 
 func filter2(s SetupFunction) {
-	in, out := s.Instances(5).AsFilter("github.com/apoydence/hydra_test.producer").Build()
+	in, out := s.SetInstances(5).AsFilter("github.com/apoydence/hydra_test.producer").Build()
 	defer close(out)
 
 	for data := range in {
@@ -119,7 +119,7 @@ func consumer(s SetupFunction, count int, results WriteOnlyChannel, doneChan cha
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.Instances(count).AsConsumer("github.com/apoydence/hydra_test.filter").Build()
+	in := s.SetInstances(count).AsConsumer("github.com/apoydence/hydra_test.filter").Build()
 	for data := range in {
 		results <- data
 	}
@@ -129,7 +129,7 @@ func consumer2(s SetupFunction, count int, results WriteOnlyChannel, doneChan ch
 	defer func() {
 		doneChan <- nil
 	}()
-	in := s.Instances(count).AsConsumer("github.com/apoydence/hydra_test.filter2").Build()
+	in := s.SetInstances(count).AsConsumer("github.com/apoydence/hydra_test.filter2").Build()
 	for data := range in {
 		results <- data
 	}

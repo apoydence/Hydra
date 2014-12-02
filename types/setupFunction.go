@@ -1,6 +1,9 @@
 package types
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+	"sync"
+)
 
 type FunctionType int
 
@@ -8,10 +11,12 @@ type SetupFunction interface {
 	AsProducer() ProducerBuilder
 	AsFilter(parent string) FilterBuilder
 	AsConsumer(parent string) ConsumerBuilder
-	Instances(count int) SetupFunction
-	GetInstances() int
-	WriteBufferSize(count int) SetupFunction
-	GetWriteBufferSize() int
+	SetInstances(count int) SetupFunction
+	Instances() int
+	SetWriteBufferSize(count int) SetupFunction
+	WriteBufferSize() int
+	SetName(name string)
+	Name() string
 }
 
 type ProducerBuilder interface {
@@ -40,6 +45,7 @@ type setup struct {
 	funcInfoChan chan FunctionInfo
 	instances    int32
 	bufferSize   int32
+	rwLock     *sync.RWMutex
 }
 
 type setupProducer struct {
@@ -63,6 +69,7 @@ func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan Function
 		funcInfoChan: c,
 		instances:    1,
 		bufferSize:   0,
+		rwLock: &sync.RWMutex{},
 	}
 }
 
@@ -86,26 +93,38 @@ func (s *setup) AsConsumer(parent string) ConsumerBuilder {
 	}
 }
 
-func (s *setup) Instances(count int) SetupFunction {
+func (s *setup) SetInstances(count int) SetupFunction {
 	atomic.StoreInt32(&s.instances, int32(count))
 	return s
 }
 
-func (s *setup) GetInstances() int {
+func (s *setup) Instances() int {
 	return int(atomic.LoadInt32(&s.instances))
 }
 
-func (s *setup) WriteBufferSize(count int) SetupFunction {
+func (s *setup) SetWriteBufferSize(count int) SetupFunction {
 	atomic.StoreInt32(&s.bufferSize, int32(count))
 	return s
 }
 
-func (s *setup) GetWriteBufferSize() int {
+func (s *setup) WriteBufferSize() int {
 	return int(atomic.LoadInt32(&s.bufferSize))
 }
 
+func (s *setup) Name() string{
+	defer s.rwLock.RUnlock()
+	s.rwLock.RLock()
+	return s.name
+}
+
+func (s *setup) SetName(name string) {
+	defer s.rwLock.RUnlock()
+	s.rwLock.RLock()
+	s.name = name
+}
+
 func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
-	fi := NewFunctionInfo(s.name, s.fs, parent, s.GetInstances(), s.GetWriteBufferSize(), funcType)
+	fi := NewFunctionInfo(s.Name(), s.fs, parent, s.Instances(), s.WriteBufferSize(), funcType)
 	s.funcInfoChan <- fi
 	return fi
 }

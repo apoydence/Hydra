@@ -25,7 +25,7 @@ var _ = Describe("SetupFunction", func() {
 
 			go func() {
 				defer GinkgoRecover()
-				in, out := f.Instances(5).AsFilter("someParent").Build()
+				in, out := f.SetInstances(5).AsFilter("someParent").Build()
 				var fin ReadOnlyChannel
 				var fout WriteOnlyChannel
 				fin = fakeIn
@@ -60,7 +60,7 @@ var _ = Describe("SetupFunction", func() {
 				fi.WriteChan() <- fakeOut
 			}()
 
-			out := f.Instances(5).AsProducer().Build()
+			out := f.SetInstances(5).AsProducer().Build()
 
 			Expect(out).To(BeEquivalentTo(fout))
 		}, 1)
@@ -80,7 +80,7 @@ var _ = Describe("SetupFunction", func() {
 				fi.ReadChan() <- fakeIn
 			}()
 
-			in := f.Instances(5).AsConsumer("someParent").Build()
+			in := f.SetInstances(5).AsConsumer("someParent").Build()
 
 			Expect(in).To(BeEquivalentTo(fin))
 		}, 1)
