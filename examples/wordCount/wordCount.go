@@ -1,38 +1,15 @@
-package main
+package wordCount
 
 import(
 	. "github.com/apoydence/hydra/examples/wordCount/types"
-	"github.com/apoydence/hydra"
 	"github.com/apoydence/hydra/types"
 	"os"
-	"fmt"
 	"bufio"
 	"strings"
 )
 
-func main(){
-	args := os.Args
-	if len(args) == 0{
-		fmt.Printf("usage: %s [Paths...]", args[0])
-		os.Exit(1)
-	}
-
-	producer := func(sf types.SetupFunction){
-		pathProducer(sf, args[1:])
-	}
-
-	done := make(chan struct{})
-	cp := func(sf types.SetupFunction){
-		wordPrinter(sf, done)
-	}
-
-	hydra.NewSetupScaffolding()(producer, pathValidator, wordExtractor, cp, symbolRemover, wordCounter)
-
-	<- done
-}
-
-func pathProducer(sf types.SetupFunction, argv []string){
-	out := sf.SetName("pathProducer").AsProducer().Build()
+func PathProducer(sf types.SetupFunction, argv []string){
+	out := sf.SetName("PathProducer").AsProducer().Build()
 	defer close(out)
 	
 	for _, path := range argv{
@@ -40,8 +17,8 @@ func pathProducer(sf types.SetupFunction, argv []string){
 	}
 }
 
-func pathValidator(sf types.SetupFunction){
-	in, out := sf.AsFilter("pathProducer").Build()
+func PathValidator(sf types.SetupFunction){
+	in, out := sf.AsFilter("PathProducer").Build()
 	defer close(out)
 	
 	for path := range in{
@@ -51,8 +28,8 @@ func pathValidator(sf types.SetupFunction){
 	}
 }
 
-func wordExtractor(sf types.SetupFunction){
-	in, out := sf.AsFilter("main.pathValidator").Build()
+func WordExtractor(sf types.SetupFunction){
+	in, out := sf.AsFilter("github.com/apoydence/hydra/examples/wordCount.PathValidator").Build()
 	defer close(out)
 
 	for path := range in{
@@ -69,8 +46,8 @@ func wordExtractor(sf types.SetupFunction){
 	}	
 }
 
-func symbolRemover(sf types.SetupFunction){
-	in, out := sf.AsFilter("main.wordExtractor").Build()
+func SymbolRemover(sf types.SetupFunction){
+	in, out := sf.AsFilter("github.com/apoydence/hydra/examples/wordCount.WordExtractor").Build()
 	defer close(out)
 
 	for word := range in{
@@ -87,8 +64,8 @@ func symbolRemover(sf types.SetupFunction){
 	}
 }
 
-func wordCounter(sf types.SetupFunction){
-	in, out := sf.AsFilter("main.symbolRemover").Build()
+func WordCounter(sf types.SetupFunction){
+	in, out := sf.AsFilter("github.com/apoydence/hydra/examples/wordCount.SymbolRemover").Build()
 	defer close(out)
 	m := make(map[string]uint32)
 
@@ -99,9 +76,9 @@ func wordCounter(sf types.SetupFunction){
 	out <- NewWordCountMarshaler(m)
 }
 
-func wordPrinter(sf types.SetupFunction, done chan struct{}) {
+func WordPrinter(sf types.SetupFunction, done chan struct{}) {
 	defer close(done)
-	in := sf.AsConsumer("main.wordCounter").Build()
+	in := sf.AsConsumer("github.com/apoydence/hydra/examples/wordCount.WordCounter").Build()
 	m := make(map[string]uint32)
 	
 	for wordMap:= range in{
