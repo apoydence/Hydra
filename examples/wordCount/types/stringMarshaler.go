@@ -2,20 +2,20 @@ package types
 
 import "encoding"
 
-type stringMarshaler struct{
+type stringMarshaler struct {
 	str string
 }
 
-func NewStringMarshaler(s string) encoding.BinaryMarshaler{
+func NewStringMarshaler(s string) encoding.BinaryMarshaler {
 	return &stringMarshaler{
-		str:s,
+		str: s,
 	}
 }
 
-func (s *stringMarshaler) MarshalBinary() (data []byte, err error){
+func (s *stringMarshaler) MarshalBinary() (data []byte, err error) {
 	panic("Not implemented")
 }
 
-func ToString(b encoding.BinaryMarshaler) string{
+func ToString(b encoding.BinaryMarshaler) string {
 	return b.(*stringMarshaler).str
 }

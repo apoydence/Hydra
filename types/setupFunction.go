@@ -1,8 +1,8 @@
 package types
 
 import (
-	"sync/atomic"
 	"sync"
+	"sync/atomic"
 )
 
 type FunctionType int
@@ -45,7 +45,7 @@ type setup struct {
 	funcInfoChan chan FunctionInfo
 	instances    int32
 	bufferSize   int32
-	rwLock     *sync.RWMutex
+	rwLock       *sync.RWMutex
 }
 
 type setupProducer struct {
@@ -69,7 +69,7 @@ func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan Function
 		funcInfoChan: c,
 		instances:    1,
 		bufferSize:   0,
-		rwLock: &sync.RWMutex{},
+		rwLock:       &sync.RWMutex{},
 	}
 }
 
@@ -111,13 +111,13 @@ func (s *setup) WriteBufferSize() int {
 	return int(atomic.LoadInt32(&s.bufferSize))
 }
 
-func (s *setup) Name() string{
+func (s *setup) Name() string {
 	defer s.rwLock.RUnlock()
 	s.rwLock.RLock()
 	return s.name
 }
 
-func (s *setup) SetName(name string) SetupFunction{
+func (s *setup) SetName(name string) SetupFunction {
 	defer s.rwLock.RUnlock()
 	s.rwLock.RLock()
 	s.name = name

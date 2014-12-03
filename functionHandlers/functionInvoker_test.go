@@ -133,10 +133,10 @@ func (f *fakeSetupFunction) WriteBufferSize() int {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) SetName(name string) SetupFunction{
+func (f *fakeSetupFunction) SetName(name string) SetupFunction {
 	panic("Not intended to be called")
 }
 
-func (f *fakeSetupFunction) Name() string{
+func (f *fakeSetupFunction) Name() string {
 	panic("Not intended to be called")
 }
