@@ -26,7 +26,7 @@ func main(){
 		wordPrinter(sf, done)
 	}
 
-	hydra.NewSetupScaffolding()(producer, pathValidator, wordExtractor, cp, puncRemover, wordCounter)
+	hydra.NewSetupScaffolding()(producer, pathValidator, wordExtractor, cp, symbolRemover, wordCounter)
 
 	<- done
 }
@@ -69,30 +69,26 @@ func wordExtractor(sf types.SetupFunction){
 	}	
 }
 
-func puncRemover(sf types.SetupFunction){
+func symbolRemover(sf types.SetupFunction){
 	in, out := sf.AsFilter("main.wordExtractor").Build()
 	defer close(out)
 
-	replacer := strings.NewReplacer(replaceString(".", ",", "?", "!", ";", ":", "'", "\"", "$", "(", ")", "-", "/", "\\", "`", "[", "]", "{", "}", "<", ">", "*", "+", "%", "^", "&", "#", "=")...)
-	
 	for word := range in{
-		w := strings.ToLower(ToString(word))
-		if len(w) > 0{
-			out <- NewStringMarshaler(replacer.Replace(w))
+		str := make([]byte, 0)
+		bytes := []byte(strings.ToLower(ToString(word)))
+		for _, x := range bytes{
+			if (x >= 0x30 && x <= 0x39) || (x >= 0x61 && x <= 0x7a){
+				str = append(str, x)
+			}
+		}
+		if len(str) > 0{
+			out <- NewStringMarshaler(string(str))
 		}
 	}
 }
 
-func replaceString(punc ...string) []string{
-	results := make([]string, 0)
-	for _, p := range punc{
-		results = append(results, p, "")
-	}
-	return results
-}
-
 func wordCounter(sf types.SetupFunction){
-	in, out := sf.AsFilter("main.puncRemover").Build()
+	in, out := sf.AsFilter("main.symbolRemover").Build()
 	defer close(out)
 	m := make(map[string]uint32)
 
