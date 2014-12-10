@@ -2,16 +2,18 @@ package functionHandlers_test
 
 import (
 	. "github.com/apoydence/hydra/functionHandlers"
+	"github.com/apoydence/hydra/mocks"
 	. "github.com/apoydence/hydra/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"math/rand"
+	"strconv"
+	"time"
 )
 
 var _ = Describe("FunctionInvoker", func() {
 
 	Context("when given multiple functions", func() {
-		fakeSetupChan := make(chan SetupFunction)
-		fakeSetupChanResult := make(chan bool)
 
 		var (
 			fakeSetupBuilder SetupFunctionBuilder
@@ -19,24 +21,15 @@ var _ = Describe("FunctionInvoker", func() {
 			functionInvoker  FunctionInvoker
 		)
 
-		fakeSetupComparer := func(s SetupFunction) bool {
-			fakeSetupChan <- s.(SetupFunction)
-			return <-fakeSetupChanResult
-		}
-
 		BeforeEach(func() {
-
 			functionInvoker = NewFunctionInvoker()
 			fakeSetupBuilder = func(name string, f func(SetupFunction), c chan FunctionInfo) SetupFunction {
 				return fakeSetup
 			}
-			fakeSetup = &fakeSetupFunction{}
 
-			go func(fakeSetup SetupFunction) {
-				for sf := range fakeSetupChan {
-					fakeSetupChanResult <- sf == fakeSetup
-				}
-			}(fakeSetup)
+			fakeSetup = mocks.NewMockSetupFunction(nil, nil)
+			rand.Seed(time.Now().UnixNano())
+			fakeSetup.SetName(strconv.Itoa(rand.Int()))
 		})
 
 		It("invokes each function once initially", func(done Done) {
@@ -60,17 +53,6 @@ var _ = Describe("FunctionInvoker", func() {
 			fake := func(sf SetupFunction) {
 				x := make(chan struct{})
 				<-x
-			}
-
-			functionInvoker(fakeSetupBuilder, fake, fake, fake)
-		}, 1)
-
-		It("passes the SetupFunction to each function", func(done Done) {
-			defer close(done)
-
-			fake := func(sf SetupFunction) {
-				defer GinkgoRecover()
-				Expect(fakeSetupComparer(sf)).To(Equal(true))
 			}
 
 			functionInvoker(fakeSetupBuilder, fake, fake, fake)
@@ -100,43 +82,4 @@ func tryRead(c chan interface{}) bool {
 	default:
 		return false
 	}
-}
-
-type fakeSetupFunction struct {
-}
-
-func (f *fakeSetupFunction) AsProducer() ProducerBuilder {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) AsFilter(parent string) FilterBuilder {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) AsConsumer(parent string) ConsumerBuilder {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) SetInstances(count int) SetupFunction {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) Instances() int {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) SetWriteBufferSize(count int) SetupFunction {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) WriteBufferSize() int {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) SetName(name string) SetupFunction {
-	panic("Not intended to be called")
-}
-
-func (f *fakeSetupFunction) Name() string {
-	panic("Not intended to be called")
 }

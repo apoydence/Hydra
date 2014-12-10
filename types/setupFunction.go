@@ -17,6 +17,7 @@ type SetupFunction interface {
 	WriteBufferSize() int
 	SetName(name string) SetupFunction
 	Name() string
+	Cancelled() bool
 }
 
 type ProducerBuilder interface {
@@ -46,6 +47,7 @@ type setup struct {
 	instances    int32
 	bufferSize   int32
 	rwLock       *sync.RWMutex
+	cancelled    AtomicBool
 }
 
 type setupProducer struct {
@@ -70,6 +72,7 @@ func NewSetupFunctionBuilder(name string, f func(SetupFunction), c chan Function
 		instances:    1,
 		bufferSize:   0,
 		rwLock:       &sync.RWMutex{},
+		cancelled:    NewAtomicBool(false),
 	}
 }
 
@@ -124,8 +127,16 @@ func (s *setup) SetName(name string) SetupFunction {
 	return s
 }
 
+func (s *setup) Cancelled() bool {
+	return s.cancelled.Get()
+}
+
+func (s *setup) cancel() {
+	s.cancelled.Set(true)
+}
+
 func submitFuncInfo(s *setup, parent string, funcType FunctionType) FunctionInfo {
-	fi := NewFunctionInfo(s.Name(), s.fs, parent, s.Instances(), s.WriteBufferSize(), funcType)
+	fi := NewFunctionInfo(s.Name(), s.fs, parent, s.Instances(), s.WriteBufferSize(), funcType, s.cancel)
 	s.funcInfoChan <- fi
 	return fi
 }

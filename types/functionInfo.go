@@ -9,6 +9,7 @@ type FunctionInfo interface {
 	FuncType() FunctionType
 	ReadChan() chan ReadOnlyChannel
 	WriteChan() chan WriteOnlyChannel
+	Cancel()
 }
 
 type functionInfo struct {
@@ -20,9 +21,10 @@ type functionInfo struct {
 	funcType        FunctionType
 	readChan        chan ReadOnlyChannel
 	writeChan       chan WriteOnlyChannel
+	canceller       Canceller
 }
 
-func NewFunctionInfo(name string, f func(SetupFunction), parent string, instances, writeBufferSize int, funcType FunctionType) FunctionInfo {
+func NewFunctionInfo(name string, f func(SetupFunction), parent string, instances, writeBufferSize int, funcType FunctionType, canceller Canceller) FunctionInfo {
 	return &functionInfo{
 		name:            name,
 		f:               f,
@@ -32,6 +34,7 @@ func NewFunctionInfo(name string, f func(SetupFunction), parent string, instance
 		funcType:        funcType,
 		readChan:        make(chan ReadOnlyChannel),
 		writeChan:       make(chan WriteOnlyChannel),
+		canceller:       canceller,
 	}
 }
 
@@ -65,4 +68,8 @@ func (f *functionInfo) ReadChan() chan ReadOnlyChannel {
 
 func (f *functionInfo) WriteChan() chan WriteOnlyChannel {
 	return f.writeChan
+}
+
+func (f *functionInfo) Cancel() {
+	f.canceller()
 }

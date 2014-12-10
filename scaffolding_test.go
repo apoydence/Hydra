@@ -84,6 +84,14 @@ var _ = Describe("Scaffolding", func() {
 			}
 			Expect(rxData).To(ConsistOf(expectedData))
 		}, 1)
+
+		FIt("should stop when cancelled", func(done Done) {
+			ic := func(s SetupFunction) {
+				infiniteConsumer(s, done)
+			}
+			c := NewSetupScaffolding()(infiniteProducer, ic)
+			c()
+		}, 1)
 	})
 })
 
@@ -132,5 +140,20 @@ func consumer2(s SetupFunction, count int, results WriteOnlyChannel, doneChan ch
 	in := s.SetInstances(count).AsConsumer("github.com/apoydence/hydra_test.filter2").Build()
 	for data := range in {
 		results <- data
+	}
+}
+
+func infiniteProducer(s SetupFunction) {
+	out := s.SetName("infiniteProducer").AsProducer().Build()
+	defer close(out)
+	for i := 0; !s.Cancelled(); i++ {
+		out <- NewIntMarshaler(i)
+	}
+}
+
+func infiniteConsumer(s SetupFunction, done Done) {
+	defer close(done)
+	in := s.AsConsumer("infiniteProducer").Build()
+	for _ = range in {
 	}
 }

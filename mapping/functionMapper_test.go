@@ -11,9 +11,9 @@ var _ = Describe("FunctionMapper", func() {
 	Context("FunctionMapper", func() {
 		It("maps the correct key to the function", func() {
 			fc := make(chan FunctionInfo, 3)
-			fc <- NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			fc <- NewFunctionInfo("b", nil, "", 1, 0, PRODUCER)
-			fc <- NewFunctionInfo("c", nil, "", 1, 0, PRODUCER)
+			fc <- NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			fc <- NewFunctionInfo("b", nil, "", 1, 0, PRODUCER, nil)
+			fc <- NewFunctionInfo("c", nil, "", 1, 0, PRODUCER, nil)
 
 			m := NewFunctionMapper()(3, fc)
 
@@ -23,9 +23,9 @@ var _ = Describe("FunctionMapper", func() {
 		})
 
 		It("maps each part to its consumer", func() {
-			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			b := NewFunctionInfo("b", nil, "a", 1, 0, FILTER)
-			c := NewFunctionInfo("c", nil, "b", 1, 0, CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			b := NewFunctionInfo("b", nil, "a", 1, 0, FILTER, nil)
+			c := NewFunctionInfo("c", nil, "b", 1, 0, CONSUMER, nil)
 
 			fc := make(chan FunctionInfo, 3)
 			fc <- a
@@ -42,9 +42,9 @@ var _ = Describe("FunctionMapper", func() {
 
 		It("handles multiple consumers", func() {
 			fc := make(chan FunctionInfo, 3)
-			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			b := NewFunctionInfo("b", nil, "a", 1, 0, CONSUMER)
-			c := NewFunctionInfo("c", nil, "a", 1, 0, CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			b := NewFunctionInfo("b", nil, "a", 1, 0, CONSUMER, nil)
+			c := NewFunctionInfo("c", nil, "a", 1, 0, CONSUMER, nil)
 
 			fc <- a
 			fc <- b
@@ -59,10 +59,10 @@ var _ = Describe("FunctionMapper", func() {
 
 		It("doesn't just keep the producers/filters that have a consumer", func() {
 			fc := make(chan FunctionInfo, 4)
-			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			b := NewFunctionInfo("b", nil, "a", 1, 0, CONSUMER)
-			c := NewFunctionInfo("c", nil, "a", 1, 0, FILTER)
-			d := NewFunctionInfo("d", nil, "", 1, 0, PRODUCER)
+			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			b := NewFunctionInfo("b", nil, "a", 1, 0, CONSUMER, nil)
+			c := NewFunctionInfo("c", nil, "a", 1, 0, FILTER, nil)
+			d := NewFunctionInfo("d", nil, "", 1, 0, PRODUCER, nil)
 
 			fc <- a
 			fc <- b
@@ -80,8 +80,8 @@ var _ = Describe("FunctionMapper", func() {
 
 		It("panics with a name mismatch", func() {
 			fc := make(chan FunctionInfo, 2)
-			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			b := NewFunctionInfo("b", nil, "wrong", 1, 0, CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			b := NewFunctionInfo("b", nil, "wrong", 1, 0, CONSUMER, nil)
 
 			fc <- a
 			fc <- b
@@ -91,8 +91,8 @@ var _ = Describe("FunctionMapper", func() {
 
 		It("detects that the number of functions is wrong", func(done Done) {
 			fc := make(chan FunctionInfo, 2)
-			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER)
-			b := NewFunctionInfo("b", nil, "wrong", 1, 0, CONSUMER)
+			a := NewFunctionInfo("a", nil, "", 1, 0, PRODUCER, nil)
+			b := NewFunctionInfo("b", nil, "wrong", 1, 0, CONSUMER, nil)
 
 			fc <- a
 			fc <- b
