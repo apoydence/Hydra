@@ -14,15 +14,23 @@ import (
 
 func main() {
 	args := os.Args
-	if len(args) != 2 {
-		fmt.Printf("usage: %s [URL]\n", args[0])
+	if len(args) != 3 {
+		fmt.Printf("usage: %s [URL] [DOWNLOAD PATH]\n", path.Base(args[0]))
 		os.Exit(1)
 	}
 
 	url := args[1]
+	download := args[2]
 	done := make(chan struct{})
 	at := types.NewAtomicBool(false)
 	feeder := channels.NewInfiniteChannel()
+
+	if !dirExists(download) {
+		if err := os.MkdirAll(download, os.ModePerm); err != nil {
+			fmt.Printf("Failed to create directory (%v): %v.\n", download, err.Error())
+			os.Exit(1)
+		}
+	}
 
 	feeder.In() <- url
 
@@ -41,7 +49,7 @@ func main() {
 	var cancel types.Canceller
 
 	downloader := func(sf types.SetupFunction) {
-		textDownloader(sf, done, func() {
+		textDownloader(sf, download, done, func() {
 			if !at.Get() {
 				feeder.Close()
 				cancel()
@@ -77,7 +85,7 @@ func urlLooper(sf types.SetupFunction, feeder chan<- interface{}, done types.Ato
 	}
 }
 
-func textDownloader(sf types.SetupFunction, done chan struct{}, closer func()) {
+func textDownloader(sf types.SetupFunction, download string, done chan struct{}, closer func()) {
 	in := sf.AsConsumer("MimeSplitterText").Build()
 
 	var totalSize int64 = 0
@@ -90,7 +98,7 @@ func textDownloader(sf types.SetupFunction, done chan struct{}, closer func()) {
 
 		u := ToString(url)
 		println("download", u, path.Base(u))
-		totalSize += saveToFile(Download(u), path.Join("/tmp/textFiles", path.Base(u)))
+		totalSize += saveToFile(Download(u), path.Join(download, path.Base(u)))
 	}
 
 	close(done)
@@ -127,4 +135,12 @@ func saveToFile(body io.ReadCloser, path string) int64 {
 	}
 
 	return count
+}
+
+func dirExists(path string) bool {
+	src, err := os.Stat(path)
+	if err == nil {
+		return src.IsDir()
+	}
+	return false
 }
