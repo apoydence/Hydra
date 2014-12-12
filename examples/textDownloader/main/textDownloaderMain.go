@@ -38,16 +38,19 @@ func main() {
 		urlLooper(sf, feeder.In(), at)
 	}
 
+	var cancel types.Canceller
+
 	downloader := func(sf types.SetupFunction) {
 		textDownloader(sf, done, func() {
 			if !at.Get() {
 				feeder.Close()
+				cancel()
 			}
 			at.Set(true)
 		})
 	}
 
-	hydra.NewSetupScaffolding()(uFeeder, looper, downloader, producer, UrlParser, MimeDetector, MimeSplitterHtml, MimeSplitterText)
+	cancel = hydra.NewSetupScaffolding()(uFeeder, looper, downloader, producer, UrlParser, MimeDetector, MimeSplitterHtml, MimeSplitterText)
 
 	<-done
 }

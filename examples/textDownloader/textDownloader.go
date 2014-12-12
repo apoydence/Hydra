@@ -20,6 +20,9 @@ func UrlProducer(sf types.SetupFunction, parent string) {
 	visitedUrls := make(map[string]interface{})
 
 	for urlBm := range in {
+		if sf.Cancelled() {
+			continue
+		}
 		url := ToString(urlBm)
 		if _, visited := visitedUrls[url]; !visited {
 			visitedUrls[url] = nil
@@ -33,6 +36,9 @@ func UrlParser(sf types.SetupFunction) {
 	defer close(out)
 
 	for urlBM := range in {
+		if sf.Cancelled() {
+			continue
+		}
 		urlStr := ToString(urlBM)
 		if path.Ext(urlStr) == "" && urlStr[len(urlStr)-1] != '/' {
 			urlStr += "/"
@@ -61,6 +67,9 @@ func MimeDetector(sf types.SetupFunction) {
 	buffer := make([]byte, 512)
 
 	for urlBM := range in {
+		if sf.Cancelled() {
+			continue
+		}
 		url := ToString(urlBM)
 		body := Download(url)
 		if body == nil {
@@ -82,6 +91,9 @@ func MimeSplitterHtml(sf types.SetupFunction) {
 	in, out := sf.SetName("MimeSplitterHtml").AsFilter("MimeDetector").Build()
 	defer close(out)
 	for urlBM := range in {
+		if sf.Cancelled() {
+			continue
+		}
 		url := ToString(urlBM)
 		mime, u := decodeMimeUrl(url)
 		if strings.Contains(mime, "html") {
@@ -94,6 +106,9 @@ func MimeSplitterText(sf types.SetupFunction) {
 	in, out := sf.SetName("MimeSplitterText").AsFilter("MimeDetector").Build()
 	defer close(out)
 	for urlBM := range in {
+		if sf.Cancelled() {
+			continue
+		}
 		url := ToString(urlBM)
 		mime, u := decodeMimeUrl(url)
 		if strings.Contains(mime, "text/plain") {
