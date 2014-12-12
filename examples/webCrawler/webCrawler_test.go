@@ -1,8 +1,8 @@
-package textDownloader_test
+package webCrawler_test
 
 import (
 	"encoding"
-	. "github.com/apoydence/hydra/examples/textDownloader"
+	. "github.com/apoydence/hydra/examples/webCrawler"
 	. "github.com/apoydence/hydra/examples/wordCount/types"
 	"github.com/apoydence/hydra/mocks"
 	"github.com/apoydence/hydra/types"
@@ -15,7 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("TextDownloader/TextDownloader", func() {
+var _ = Describe("Web Crawler", func() {
 	var in chan encoding.BinaryMarshaler
 	var out chan encoding.BinaryMarshaler
 	var sf types.SetupFunction

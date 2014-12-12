@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/apoydence/hydra"
-	. "github.com/apoydence/hydra/examples/textDownloader"
+	. "github.com/apoydence/hydra/examples/webCrawler"
 	. "github.com/apoydence/hydra/examples/wordCount/types"
 	"github.com/apoydence/hydra/types"
 	"github.com/eapache/channels"

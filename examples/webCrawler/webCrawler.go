@@ -1,4 +1,4 @@
-package textDownloader
+package webCrawler
 
 import (
 	. "github.com/apoydence/hydra/examples/wordCount/types"

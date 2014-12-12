@@ -1,4 +1,4 @@
-package textDownloader_test
+package webCrawler_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestTextDownloader(t *testing.T) {
+func TestWebCrawler(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "TextDownloader Suite")
+	RunSpecs(t, "WebCrawler Suite")
 }
