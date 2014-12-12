@@ -10,17 +10,25 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
 )
 
 func main() {
 	args := os.Args
-	if len(args) != 3 {
-		fmt.Printf("usage: %s [URL] [DOWNLOAD PATH]\n", path.Base(args[0]))
+	if len(args) != 4 {
+		fmt.Printf("usage: %s [URL] [DOWNLOAD PATH] [# MBs]\n", path.Base(args[0]))
 		os.Exit(1)
 	}
 
 	url := args[1]
 	download := args[2]
+	size, err := strconv.Atoi(args[3])
+
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		fmt.Printf("usage: %s [URL] [DOWNLOAD PATH] [# MBs]\n", path.Base(args[0]))
+	}
+
 	done := make(chan struct{})
 	at := types.NewAtomicBool(false)
 	feeder := channels.NewInfiniteChannel()
@@ -49,7 +57,7 @@ func main() {
 	var cancel types.Canceller
 
 	downloader := func(sf types.SetupFunction) {
-		textDownloader(sf, download, done, func() {
+		textDownloader(sf, download, size, done, func() {
 			if !at.Get() {
 				feeder.Close()
 				cancel()
@@ -85,13 +93,13 @@ func urlLooper(sf types.SetupFunction, feeder chan<- interface{}, done types.Ato
 	}
 }
 
-func textDownloader(sf types.SetupFunction, download string, done chan struct{}, closer func()) {
+func textDownloader(sf types.SetupFunction, download string, mb int, done chan struct{}, closer func()) {
 	in := sf.AsConsumer("MimeSplitterText").Build()
 
 	var totalSize int64 = 0
 
 	for url := range in {
-		if totalSize >= 1*1024*1024 {
+		if totalSize >= int64(mb)*1024*1024 {
 			closer()
 			continue
 		}
@@ -99,6 +107,7 @@ func textDownloader(sf types.SetupFunction, download string, done chan struct{},
 		u := ToString(url)
 		println("download", u, path.Base(u))
 		totalSize += saveToFile(Download(u), path.Join(download, path.Base(u)))
+		println("Size", totalSize)
 	}
 
 	close(done)
