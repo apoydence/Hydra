@@ -8,17 +8,8 @@ import (
 	"strings"
 )
 
-func PathProducer(sf types.SetupFunction, argv []string) {
-	out := sf.SetName("PathProducer").AsProducer().Build()
-	defer close(out)
-
-	for _, path := range argv {
-		out <- NewStringMarshaler(path)
-	}
-}
-
-func PathValidator(sf types.SetupFunction) {
-	in, out := sf.AsFilter("PathProducer").Build()
+func PathValidator(sf types.SetupFunction, parent string) {
+	in, out := sf.SetName("PathValidator").AsFilter(parent).Build()
 	defer close(out)
 
 	for path := range in {
@@ -29,7 +20,7 @@ func PathValidator(sf types.SetupFunction) {
 }
 
 func WordExtractor(sf types.SetupFunction) {
-	in, out := sf.AsFilter("github.com/apoydence/hydra/examples/wordCount.PathValidator").Build()
+	in, out := sf.AsFilter("PathValidator").Build()
 	defer close(out)
 
 	for path := range in {
@@ -76,9 +67,10 @@ func WordCounter(sf types.SetupFunction) {
 	out <- NewWordCountMarshaler(m)
 }
 
-func WordPrinter(sf types.SetupFunction, done chan struct{}) {
-	defer close(done)
-	in := sf.AsConsumer("github.com/apoydence/hydra/examples/wordCount.WordCounter").Build()
+func FinalWordCounter(sf types.SetupFunction) {
+	in, out := sf.AsFilter("github.com/apoydence/hydra/examples/wordCount.WordCounter").Build()
+	defer close(out)
+
 	m := make(map[string]uint32)
 
 	for wordMap := range in {
@@ -87,9 +79,7 @@ func WordPrinter(sf types.SetupFunction, done chan struct{}) {
 		}
 	}
 
-	for k, v := range m {
-		println(k, v)
-	}
+	out <- NewWordCountMarshaler(m)
 }
 
 func incMap(word string, incBy uint32, m map[string]uint32) {
