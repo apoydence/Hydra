@@ -1,20 +1,20 @@
-package functiontree_test
+package rpn_test
 
 import (
 	"reflect"
 
-	"github.com/apoydence/hydra/internal/functiontree"
+	"github.com/apoydence/hydra/internal/rpn"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("RpnInvoker", func() {
+var _ = Describe("Invoker", func() {
 	var (
 		Integer reflect.Type
 
-		rpnInvoker *functiontree.RpnInvoker
-		rpn        []functiontree.Value
+		invoker   *rpn.Invoker
+		rpnValues []rpn.Value
 
 		expectedInput   int
 		expectedOutputA int
@@ -43,12 +43,12 @@ var _ = Describe("RpnInvoker", func() {
 		calledName = make(chan string, 100)
 		calledIn = make(chan []interface{}, 100)
 		calledOut = make(chan []interface{}, 100)
-		rpn = nil
+		rpnValues = nil
 
 	})
 
 	JustBeforeEach(func() {
-		rpnInvoker = functiontree.NewRpnInvoker(rpn...)
+		invoker = rpn.NewInvoker(rpnValues...)
 	})
 
 	Describe("Invoke()", func() {
@@ -56,13 +56,13 @@ var _ = Describe("RpnInvoker", func() {
 			BeforeEach(func() {
 
 				// Value FuncA => FuncA(Value)
-				rpn = []functiontree.Value{
+				rpnValues = []rpn.Value{
 					{
 						ValueOk: true,
-						Value:   functiontree.Placeholder,
+						Value:   rpn.Placeholder,
 					},
 					{
-						Callable: functiontree.Callable{
+						Callable: rpn.Callable{
 							Function: funcBuilder("FuncA"),
 							Inputs:   []reflect.Type{Integer},
 							Outputs:  []reflect.Type{Integer},
@@ -74,19 +74,19 @@ var _ = Describe("RpnInvoker", func() {
 			})
 
 			It("invokes the function", func() {
-				rpnInvoker.Invoke(expectedInput)
+				invoker.Invoke(expectedInput)
 
 				Expect(calledName).Should(Receive(Equal("FuncA")))
 			})
 
 			It("passes the expected arguments", func() {
-				rpnInvoker.Invoke(expectedInput)
+				invoker.Invoke(expectedInput)
 
 				Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
 			})
 
 			It("returns the expected values", func() {
-				returnValue := rpnInvoker.Invoke(expectedInput)
+				returnValue := invoker.Invoke(expectedInput)
 
 				Expect(returnValue).Should(Equal(expectedOutputA))
 			})
@@ -95,9 +95,9 @@ var _ = Describe("RpnInvoker", func() {
 				BeforeEach(func() {
 
 					// Value FuncA FuncB => FuncB(FuncA(Value))
-					rpn = append(rpn,
-						functiontree.Value{
-							Callable: functiontree.Callable{
+					rpnValues = append(rpnValues,
+						rpn.Value{
+							Callable: rpn.Callable{
 								Function: funcBuilder("FuncB"),
 								Inputs:   []reflect.Type{Integer},
 								Outputs:  []reflect.Type{Integer},
@@ -109,21 +109,21 @@ var _ = Describe("RpnInvoker", func() {
 
 				It("invokes the functions in order", func(done Done) {
 					defer close(done)
-					rpnInvoker.Invoke(expectedInput)
+					invoker.Invoke(expectedInput)
 
 					Expect(calledName).Should(Receive(Equal("FuncA")))
 					Expect(calledName).Should(Receive(Equal("FuncB")))
 				})
 
 				It("passes the expected arguments", func() {
-					rpnInvoker.Invoke(expectedInput)
+					invoker.Invoke(expectedInput)
 
 					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
 					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedOutputA})))
 				})
 
 				It("returns the expected values", func() {
-					returnValue := rpnInvoker.Invoke(expectedInput)
+					returnValue := invoker.Invoke(expectedInput)
 
 					Expect(returnValue).Should(Equal(expectedOutputB))
 				})
@@ -133,14 +133,14 @@ var _ = Describe("RpnInvoker", func() {
 				BeforeEach(func() {
 
 					// Value FuncA Value FuncB => FuncB(FuncA(Value), Value)
-					rpn = append(rpn,
-						[]functiontree.Value{
+					rpnValues = append(rpnValues,
+						[]rpn.Value{
 							{
 								ValueOk: true,
-								Value:   functiontree.Placeholder,
+								Value:   rpn.Placeholder,
 							},
 							{
-								Callable: functiontree.Callable{
+								Callable: rpn.Callable{
 									Function: funcBuilder("FuncB"),
 									Inputs:   []reflect.Type{Integer, Integer},
 									Outputs:  []reflect.Type{Integer},
@@ -153,14 +153,14 @@ var _ = Describe("RpnInvoker", func() {
 
 				It("invokes the functions in order", func(done Done) {
 					defer close(done)
-					rpnInvoker.Invoke(expectedInput)
+					invoker.Invoke(expectedInput)
 
 					Expect(calledName).Should(Receive(Equal("FuncA")))
 					Expect(calledName).Should(Receive(Equal("FuncB")))
 				})
 
 				It("passes the expected arguments", func() {
-					rpnInvoker.Invoke(expectedInput)
+					invoker.Invoke(expectedInput)
 
 					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
 					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedOutputA, expectedInput})))

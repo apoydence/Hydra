@@ -1,4 +1,4 @@
-package functiontree
+package rpn
 
 import "reflect"
 
@@ -6,8 +6,8 @@ var (
 	Placeholder interface{} = &Value{}
 )
 
-type RpnInvoker struct {
-	rpn []Value
+type Invoker struct {
+	rpnValues []Value
 }
 
 type Value struct {
@@ -22,13 +22,13 @@ type Callable struct {
 	Outputs  []reflect.Type
 }
 
-func NewRpnInvoker(rpn ...Value) *RpnInvoker {
-	return &RpnInvoker{
-		rpn: rpn,
+func NewInvoker(rpnValues ...Value) *Invoker {
+	return &Invoker{
+		rpnValues: rpnValues,
 	}
 }
 
-func (r *RpnInvoker) Invoke(inputValue interface{}) interface{} {
+func (r *Invoker) Invoke(inputValue interface{}) interface{} {
 	queue := r.replacePlaceholder(inputValue)
 
 	for len(queue) > 1 || !queue[0].ValueOk {
@@ -51,9 +51,9 @@ func (r *RpnInvoker) Invoke(inputValue interface{}) interface{} {
 	return queue[0].Value
 }
 
-func (r *RpnInvoker) replacePlaceholder(value interface{}) []Value {
-	queue := make([]Value, 0, len(r.rpn))
-	for _, node := range r.rpn {
+func (r *Invoker) replacePlaceholder(value interface{}) []Value {
+	queue := make([]Value, 0, len(r.rpnValues))
+	for _, node := range r.rpnValues {
 		if node.Value != Placeholder {
 			queue = append(queue, node)
 			continue
@@ -67,7 +67,7 @@ func (r *RpnInvoker) replacePlaceholder(value interface{}) []Value {
 	return queue
 }
 
-func (r *RpnInvoker) buildArgs(i, lenInputs int, queue []Value) []interface{} {
+func (r *Invoker) buildArgs(i, lenInputs int, queue []Value) []interface{} {
 	var args []interface{}
 	for _, value := range queue[i-lenInputs : i] {
 		args = append(args, value.Value)

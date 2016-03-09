@@ -1,4 +1,4 @@
-package functiontree_test
+package rpn_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestFunctiontree(t *testing.T) {
+func TestRpn(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Function Tree Suite")
+	RunSpecs(t, "Rpn Suite")
 }
