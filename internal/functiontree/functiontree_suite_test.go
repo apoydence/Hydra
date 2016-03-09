@@ -1,4 +1,4 @@
-package mocks_test
+package functiontree_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestMocks(t *testing.T) {
+func TestFunctiontree(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Mocks Suite")
+	RunSpecs(t, "Function Tree Suite")
 }
