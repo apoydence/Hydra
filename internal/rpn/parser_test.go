@@ -24,38 +24,12 @@ var _ = Describe("Parser", func() {
 		Context("single arguments", func() {
 			Context("single function", func() {
 				BeforeEach(func() {
-					expectedQuery = "FuncA(99)"
+					expectedQuery = "FuncA(%v)"
 				})
 
-				It("does not return an error", func() {
-					_, err := parser.Parse(expectedQuery)
-
-					Expect(err).ToNot(HaveOccurred())
-				})
-
-				It("returns 2 nodes", func() {
-					result, _ := parser.Parse(expectedQuery)
-
-					Expect(result).To(HaveLen(2))
-				})
-
-				It("returns the value first", func() {
-					result, _ := parser.Parse(expectedQuery)
-
-					Expect(result[0].ValueOk).To(BeTrue())
-					Expect(result[0].Name).To(Equal("99"))
-				})
-
-				It("returns the function second", func() {
-					result, _ := parser.Parse(expectedQuery)
-
-					Expect(result[1].ValueOk).To(BeFalse())
-					Expect(result[1].Name).To(Equal("FuncA"))
-				})
-
-				Context("extra (but valid) parenthesis", func() {
+				Context("number used as argument", func() {
 					BeforeEach(func() {
-						expectedQuery = fmt.Sprintf("(%s)", expectedQuery)
+						expectedQuery = fmt.Sprintf(expectedQuery, 99)
 					})
 
 					It("does not return an error", func() {
@@ -63,15 +37,73 @@ var _ = Describe("Parser", func() {
 
 						Expect(err).ToNot(HaveOccurred())
 					})
+
+					It("returns 2 nodes", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result).To(HaveLen(2))
+					})
+
+					It("returns the value first", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result[0].ValueOk).To(BeTrue())
+						Expect(result[0].Name).To(Equal("99"))
+					})
+
+					It("returns the function second", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result[1].ValueOk).To(BeFalse())
+						Expect(result[1].Name).To(Equal("FuncA"))
+					})
+
+					Context("extra (but valid) parenthesis", func() {
+						BeforeEach(func() {
+							expectedQuery = fmt.Sprintf("(%s)", expectedQuery)
+						})
+
+						It("does not return an error", func() {
+							_, err := parser.Parse(expectedQuery)
+
+							Expect(err).ToNot(HaveOccurred())
+						})
+					})
 				})
 
-				DescribeTable("misplaced parenthesis", func(query string) {
+				Context("variable used as argument", func() {
+					BeforeEach(func() {
+						expectedQuery = fmt.Sprintf(expectedQuery, "$1")
+					})
+
+					It("does not return an error", func() {
+						_, err := parser.Parse(expectedQuery)
+
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("returns 2 nodes", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result).To(HaveLen(2))
+					})
+
+					It("returns the value first", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result[0].ValueOk).To(BeTrue())
+						Expect(result[0].Name).To(Equal("$1"))
+					})
+				})
+
+				DescribeTable("invalid syntax", func(query string) {
 					_, err := parser.Parse(query)
 
 					Expect(err).To(HaveOccurred())
 				},
 					Entry("extra right parenthesis", "(99))"),
 					Entry("extra left parenthesis", "((99)"),
+					Entry("invalid function name", "9invalid(99)"),
 				)
 			})
 		})

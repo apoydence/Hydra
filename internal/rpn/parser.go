@@ -8,11 +8,15 @@ import (
 )
 
 var (
-	valueSplitter *regexp.Regexp
+	valueSplitter  *regexp.Regexp
+	variableRegexp *regexp.Regexp
+	funcRegexp     *regexp.Regexp
 )
 
 func init() {
 	valueSplitter = regexp.MustCompile(`[\(\)\,]`)
+	variableRegexp = regexp.MustCompile(`^\$[0-9]+$`)
+	funcRegexp = regexp.MustCompile(`^[A-Za-z]+$`)
 }
 
 type Parser struct {
@@ -31,8 +35,9 @@ func (p *Parser) Parse(query string) ([]RawRpnNode, error) {
 	var nodes []RawRpnNode
 	opStack := NewStack()
 	tokens := p.split(query)
+
 	for i, token := range tokens {
-		if p.isNumber(token) {
+		if p.isValue(token) {
 			nodes = append(nodes, RawRpnNode{
 				ValueOk: true,
 				Name:    token,
@@ -46,6 +51,11 @@ func (p *Parser) Parse(query string) ([]RawRpnNode, error) {
 			if p.nextEquals(tokens, i+1, ",") {
 				return nil, fmt.Errorf("misplaced ','")
 			}
+
+			if token != "(" && !funcRegexp.MatchString(token) {
+				return nil, fmt.Errorf("invalid function name '%s'", token)
+			}
+
 			continue
 		}
 
@@ -157,9 +167,9 @@ func (p *Parser) nextEquals(tokens []string, index int, value string) bool {
 	return tokens[index] == value
 }
 
-func (p *Parser) isNumber(token string) bool {
+func (p *Parser) isValue(token string) bool {
 	_, err := strconv.ParseFloat(token, 64)
-	return err == nil
+	return err == nil || variableRegexp.MatchString(token)
 }
 
 func (p *Parser) isFunction(tokens []string, index int) bool {
