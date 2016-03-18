@@ -2,10 +2,6 @@ package rpn
 
 import "reflect"
 
-var (
-	Placeholder interface{} = &Value{}
-)
-
 type Invoker struct {
 	rpnValues []Value
 }
@@ -29,7 +25,7 @@ func NewInvoker(rpnValues ...Value) *Invoker {
 }
 
 func (r *Invoker) Invoke(inputValue interface{}) interface{} {
-	queue := r.replacePlaceholder(inputValue)
+	queue := r.replaceVariables([]interface{}{inputValue})
 
 	for len(queue) > 1 || !queue[0].ValueOk {
 		for i, value := range queue {
@@ -51,18 +47,18 @@ func (r *Invoker) Invoke(inputValue interface{}) interface{} {
 	return queue[0].Value
 }
 
-func (r *Invoker) replacePlaceholder(value interface{}) []Value {
+func (r *Invoker) replaceVariables(values []interface{}) []Value {
 	queue := make([]Value, 0, len(r.rpnValues))
 	for _, node := range r.rpnValues {
-		if node.Value != Placeholder {
-			queue = append(queue, node)
+		if variable, ok := node.Value.(Variable); ok {
+			queue = append(queue, Value{
+				ValueOk: true,
+				Value:   values[variable.Index],
+			})
 			continue
 		}
 
-		queue = append(queue, Value{
-			ValueOk: true,
-			Value:   value,
-		})
+		queue = append(queue, node)
 	}
 	return queue
 }

@@ -59,7 +59,10 @@ var _ = Describe("Invoker", func() {
 				rpnValues = []rpn.Value{
 					{
 						ValueOk: true,
-						Value:   rpn.Placeholder,
+						Value: rpn.Variable{
+							Index: 0,
+							Type:  Integer,
+						},
 					},
 					{
 						Callable: rpn.Callable{
@@ -137,7 +140,10 @@ var _ = Describe("Invoker", func() {
 						[]rpn.Value{
 							{
 								ValueOk: true,
-								Value:   rpn.Placeholder,
+								Value: rpn.Variable{
+									Index: 0,
+									Type:  Integer,
+								},
 							},
 							{
 								Callable: rpn.Callable{
