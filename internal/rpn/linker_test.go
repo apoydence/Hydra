@@ -2,6 +2,7 @@ package rpn_test
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/apoydence/hydra/internal/rpn"
 
@@ -20,9 +21,9 @@ var _ = Describe("Linker", func() {
 		link     *rpn.Linker
 	)
 
-	var callable = func(name string) func([]interface{}) []interface{} {
-		return func([]interface{}) []interface{} {
-			return []interface{}{name}
+	var callable = func(name string) func([]unsafe.Pointer) []unsafe.Pointer {
+		return func([]unsafe.Pointer) []unsafe.Pointer {
+			return []unsafe.Pointer{unsafe.Pointer(&name)}
 		}
 	}
 
@@ -35,6 +36,10 @@ var _ = Describe("Linker", func() {
 		values, err := parser.Parse(query)
 		Expect(err).ToNot(HaveOccurred())
 		return values
+	}
+
+	var unsafeToInt = func(value unsafe.Pointer) int {
+		return *(*int)(value)
 	}
 
 	BeforeEach(func() {
@@ -94,7 +99,7 @@ var _ = Describe("Linker", func() {
 				values, _ := link.Link(rpnNodes)
 
 				Expect(values[0].ValueOk).To(BeTrue())
-				Expect(values[0].Value).To(Equal(99))
+				Expect(unsafeToInt(values[0].Value)).To(Equal(99))
 			})
 
 			It("returns the expected function", func() {
@@ -134,8 +139,8 @@ var _ = Describe("Linker", func() {
 				It("returns the variable with the correct type", func() {
 					values, _ := link.Link(rpnNodes)
 
-					Expect(values[2].ValueOk).To(BeTrue())
-					Expect(values[2].Value).To(Equal(rpn.Variable{
+					Expect(values[2].ValueOk).To(BeFalse())
+					Expect(values[2].Variable).To(Equal(&rpn.Variable{
 						Index: 0,
 						Type:  Integer,
 					}))
@@ -174,8 +179,8 @@ var _ = Describe("Linker", func() {
 				It("returns the variable with the correct type", func() {
 					values, _ := link.Link(rpnNodes)
 
-					Expect(values[0].ValueOk).To(BeTrue())
-					Expect(values[0].Value).To(Equal(rpn.Variable{
+					Expect(values[0].ValueOk).To(BeFalse())
+					Expect(values[0].Variable).To(Equal(&rpn.Variable{
 						Index: 0,
 						Type:  Integer,
 					}))

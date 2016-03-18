@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"unsafe"
 )
 
 type Linker struct {
@@ -85,16 +86,11 @@ func (l *Linker) correctVariableIndexes(values []*Value) error {
 	var vars []int
 
 	for _, v := range values {
-		if !v.ValueOk {
+		if v.Variable == nil {
 			continue
 		}
 
-		variable, ok := v.Value.(Variable)
-		if !ok {
-			continue
-		}
-
-		vars = append(vars, variable.Index)
+		vars = append(vars, v.Variable.Index)
 	}
 
 	if len(vars) == 0 {
@@ -170,8 +166,7 @@ func (l *Linker) convertValue(node *indexedNode, inputType reflect.Type, values 
 
 	if varIndex, ok := l.isVariable(node.RawRpnNode.Name); ok {
 		values[node.index] = &Value{
-			ValueOk: true,
-			Value: Variable{
+			Variable: &Variable{
 				Index: varIndex,
 				Type:  inputType,
 			},
@@ -183,7 +178,7 @@ func (l *Linker) convertValue(node *indexedNode, inputType reflect.Type, values 
 	case reflect.Int:
 		integer, _ := strconv.Atoi(node.RawRpnNode.Name)
 		values[node.index] = &Value{
-			Value: integer,
+			Value: unsafe.Pointer(&integer),
 		}
 	}
 

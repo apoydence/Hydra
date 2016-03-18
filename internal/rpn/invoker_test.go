@@ -2,6 +2,7 @@ package rpn_test
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/apoydence/hydra/internal/rpn"
 
@@ -16,33 +17,37 @@ var _ = Describe("Invoker", func() {
 		invoker   *rpn.Invoker
 		rpnValues []rpn.Value
 
-		expectedInput   int
-		expectedOutputA int
-		expectedOutputB int
+		expectedInput   unsafe.Pointer
+		expectedOutputA unsafe.Pointer
+		expectedOutputB unsafe.Pointer
 
 		calledName chan string
-		calledIn   chan []interface{}
-		calledOut  chan []interface{}
+		calledIn   chan []unsafe.Pointer
+		calledOut  chan []unsafe.Pointer
 	)
 
-	var funcBuilder = func(name string) func([]interface{}) []interface{} {
-		return func(args []interface{}) []interface{} {
+	var funcBuilder = func(name string) func([]unsafe.Pointer) []unsafe.Pointer {
+		return func(args []unsafe.Pointer) []unsafe.Pointer {
 			calledName <- name
 			calledIn <- args
 			return <-calledOut
 		}
 	}
 
+	var unsafeInt = func(i int) unsafe.Pointer {
+		return unsafe.Pointer(&i)
+	}
+
 	BeforeEach(func() {
 		Integer = reflect.TypeOf(0)
 
-		expectedInput = 97
-		expectedOutputA = 99
-		expectedOutputB = 101
+		expectedInput = unsafeInt(97)
+		expectedOutputA = unsafeInt(99)
+		expectedOutputB = unsafeInt(101)
 
 		calledName = make(chan string, 100)
-		calledIn = make(chan []interface{}, 100)
-		calledOut = make(chan []interface{}, 100)
+		calledIn = make(chan []unsafe.Pointer, 100)
+		calledOut = make(chan []unsafe.Pointer, 100)
 		rpnValues = nil
 
 	})
@@ -58,8 +63,7 @@ var _ = Describe("Invoker", func() {
 				// Value FuncA => FuncA(Value)
 				rpnValues = []rpn.Value{
 					{
-						ValueOk: true,
-						Value: rpn.Variable{
+						Variable: &rpn.Variable{
 							Index: 0,
 							Type:  Integer,
 						},
@@ -73,7 +77,7 @@ var _ = Describe("Invoker", func() {
 					},
 				}
 
-				calledOut <- []interface{}{expectedOutputA}
+				calledOut <- []unsafe.Pointer{expectedOutputA}
 			})
 
 			It("invokes the function", func() {
@@ -85,7 +89,7 @@ var _ = Describe("Invoker", func() {
 			It("passes the expected arguments", func() {
 				invoker.Invoke(expectedInput)
 
-				Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
+				Expect(calledIn).Should(Receive(Equal([]unsafe.Pointer{expectedInput})))
 			})
 
 			It("returns the expected values", func() {
@@ -107,7 +111,7 @@ var _ = Describe("Invoker", func() {
 							},
 						})
 
-					calledOut <- []interface{}{expectedOutputB}
+					calledOut <- []unsafe.Pointer{expectedOutputB}
 				})
 
 				It("invokes the functions in order", func(done Done) {
@@ -121,8 +125,8 @@ var _ = Describe("Invoker", func() {
 				It("passes the expected arguments", func() {
 					invoker.Invoke(expectedInput)
 
-					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
-					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedOutputA})))
+					Expect(calledIn).Should(Receive(Equal([]unsafe.Pointer{expectedInput})))
+					Expect(calledIn).Should(Receive(Equal([]unsafe.Pointer{expectedOutputA})))
 				})
 
 				It("returns the expected values", func() {
@@ -139,8 +143,7 @@ var _ = Describe("Invoker", func() {
 					rpnValues = append(rpnValues,
 						[]rpn.Value{
 							{
-								ValueOk: true,
-								Value: rpn.Variable{
+								Variable: &rpn.Variable{
 									Index: 0,
 									Type:  Integer,
 								},
@@ -154,7 +157,7 @@ var _ = Describe("Invoker", func() {
 							},
 						}...)
 
-					calledOut <- []interface{}{expectedOutputB}
+					calledOut <- []unsafe.Pointer{expectedOutputB}
 				})
 
 				It("invokes the functions in order", func(done Done) {
@@ -168,8 +171,8 @@ var _ = Describe("Invoker", func() {
 				It("passes the expected arguments", func() {
 					invoker.Invoke(expectedInput)
 
-					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedInput})))
-					Expect(calledIn).Should(Receive(Equal([]interface{}{expectedOutputA, expectedInput})))
+					Expect(calledIn).Should(Receive(Equal([]unsafe.Pointer{expectedInput})))
+					Expect(calledIn).Should(Receive(Equal([]unsafe.Pointer{expectedOutputA, expectedInput})))
 				})
 			})
 		})
