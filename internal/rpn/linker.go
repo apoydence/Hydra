@@ -84,12 +84,18 @@ func (l *Linker) hasFunction(values []*Value) error {
 
 func (l *Linker) correctVariableIndexes(values []*Value) error {
 	var vars []int
+	varMap := make(map[int]bool)
 
 	for _, v := range values {
 		if v.Variable == nil {
 			continue
 		}
 
+		if varMap[v.Variable.Index] {
+			continue
+		}
+
+		varMap[v.Variable.Index] = true
 		vars = append(vars, v.Variable.Index)
 	}
 

@@ -187,6 +187,36 @@ var _ = Describe("Linker", func() {
 				})
 			})
 		})
+
+		Context("single function one variable twice", func() {
+			BeforeEach(func() {
+				rpnNodes = []rpn.RawRpnNode{
+					{
+						ValueOk: true,
+						Name:    "$0",
+					},
+					{
+						ValueOk: true,
+						Name:    "$0",
+					},
+					{
+						Name: "FuncB",
+					},
+				}
+			})
+
+			It("does not return an error", func() {
+				_, err := link.Link(rpnNodes)
+
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("returns the correct number of values", func() {
+				values, _ := link.Link(rpnNodes)
+
+				Expect(values).To(HaveLen(3))
+			})
+		})
 	})
 
 	DescribeTable("invalid equations", func(query string) {
