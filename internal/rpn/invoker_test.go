@@ -15,7 +15,7 @@ var _ = Describe("Invoker", func() {
 		Integer reflect.Type
 
 		invoker   *rpn.Invoker
-		rpnValues []rpn.Value
+		rpnValues []*rpn.Value
 
 		expectedInput   unsafe.Pointer
 		expectedOutputA unsafe.Pointer
@@ -61,7 +61,7 @@ var _ = Describe("Invoker", func() {
 			BeforeEach(func() {
 
 				// Value FuncA => FuncA(Value)
-				rpnValues = []rpn.Value{
+				rpnValues = []*rpn.Value{
 					{
 						Variable: &rpn.Variable{
 							Index: 0,
@@ -103,7 +103,7 @@ var _ = Describe("Invoker", func() {
 
 					// Value FuncA FuncB => FuncB(FuncA(Value))
 					rpnValues = append(rpnValues,
-						rpn.Value{
+						&rpn.Value{
 							Callable: rpn.Callable{
 								Function: funcBuilder("FuncB"),
 								Inputs:   []reflect.Type{Integer},
@@ -141,7 +141,7 @@ var _ = Describe("Invoker", func() {
 
 					// Value FuncA Value FuncB => FuncB(FuncA(Value), Value)
 					rpnValues = append(rpnValues,
-						[]rpn.Value{
+						[]*rpn.Value{
 							{
 								Variable: &rpn.Variable{
 									Index: 0,

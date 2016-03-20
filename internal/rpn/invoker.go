@@ -6,7 +6,7 @@ import (
 )
 
 type Invoker struct {
-	rpnValues []Value
+	rpnValues []*Value
 }
 
 type Value struct {
@@ -22,7 +22,7 @@ type Callable struct {
 	Outputs  []reflect.Type
 }
 
-func NewInvoker(rpnValues ...Value) *Invoker {
+func NewInvoker(rpnValues ...*Value) *Invoker {
 	return &Invoker{
 		rpnValues: rpnValues,
 	}
@@ -37,7 +37,7 @@ func (r *Invoker) Invoke(inputValue unsafe.Pointer) unsafe.Pointer {
 				lenInputs := len(value.Callable.Inputs)
 				args := r.buildArgs(i, lenInputs, queue)
 				result := value.Callable.Function(args)
-				queue[i] = Value{
+				queue[i] = &Value{
 					ValueOk: true,
 					Value:   result[0],
 				}
@@ -51,11 +51,11 @@ func (r *Invoker) Invoke(inputValue unsafe.Pointer) unsafe.Pointer {
 	return queue[0].Value
 }
 
-func (r *Invoker) replaceVariables(values []unsafe.Pointer) []Value {
-	queue := make([]Value, 0, len(r.rpnValues))
+func (r *Invoker) replaceVariables(values []unsafe.Pointer) []*Value {
+	queue := make([]*Value, 0, len(r.rpnValues))
 	for _, node := range r.rpnValues {
 		if node.Variable != nil {
-			queue = append(queue, Value{
+			queue = append(queue, &Value{
 				ValueOk: true,
 				Value:   values[node.Variable.Index],
 			})
@@ -67,7 +67,7 @@ func (r *Invoker) replaceVariables(values []unsafe.Pointer) []Value {
 	return queue
 }
 
-func (r *Invoker) buildArgs(i, lenInputs int, queue []Value) []unsafe.Pointer {
+func (r *Invoker) buildArgs(i, lenInputs int, queue []*Value) []unsafe.Pointer {
 	var args []unsafe.Pointer
 	for _, value := range queue[i-lenInputs : i] {
 		args = append(args, value.Value)
