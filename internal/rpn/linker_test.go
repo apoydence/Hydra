@@ -62,6 +62,46 @@ var _ = Describe("Linker", func() {
 				Inputs:   []reflect.Type{String},
 				Outputs:  []reflect.Type{Integer},
 			},
+			"FuncInt32": rpn.Callable{
+				Function: callable("FuncInt32"),
+				Inputs:   []reflect.Type{reflect.TypeOf(int32(0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncUint32": rpn.Callable{
+				Function: callable("FuncUint32"),
+				Inputs:   []reflect.Type{reflect.TypeOf(uint32(0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncInt64": rpn.Callable{
+				Function: callable("FuncInt64"),
+				Inputs:   []reflect.Type{reflect.TypeOf(int64(0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncUint64": rpn.Callable{
+				Function: callable("FuncUint64"),
+				Inputs:   []reflect.Type{reflect.TypeOf(uint64(0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncFloat32": rpn.Callable{
+				Function: callable("FuncFloat32"),
+				Inputs:   []reflect.Type{reflect.TypeOf(float32(0.0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncFloat64": rpn.Callable{
+				Function: callable("FuncFloat64"),
+				Inputs:   []reflect.Type{reflect.TypeOf(float64(0.0))},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncString": rpn.Callable{
+				Function: callable("FuncFloat64"),
+				Inputs:   []reflect.Type{reflect.TypeOf("")},
+				Outputs:  []reflect.Type{Integer},
+			},
+			"FuncBool": rpn.Callable{
+				Function: callable("FuncBool"),
+				Inputs:   []reflect.Type{reflect.TypeOf(true)},
+				Outputs:  []reflect.Type{Integer},
+			},
 		}
 
 		link = rpn.New(funcs)
@@ -231,5 +271,24 @@ var _ = Describe("Linker", func() {
 		Entry("no functions", "99"),
 		Entry("variables don't start at 0", "FuncA($1)"),
 		Entry("variables aren't incremental", "FuncB($0, $5)"),
+	)
+
+	DescribeTable("various constant types", func(query string, equals func(unsafe.Pointer) bool) {
+		rpnNodes = parse(query)
+		values, err := link.Link(rpnNodes)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(values).To(HaveLen(2))
+		Expect(values[0].ValueOk).To(BeTrue())
+		Expect(equals(values[0].Value)).To(BeTrue())
+	},
+		Entry("int32", "FuncInt32(99)", func(x unsafe.Pointer) bool { return *(*int32)(x) == 99 }),
+		Entry("uint32", "FuncUint32(99)", func(x unsafe.Pointer) bool { return *(*uint32)(x) == 99 }),
+		Entry("int64", "FuncInt64(99)", func(x unsafe.Pointer) bool { return *(*int64)(x) == 99 }),
+		Entry("uint64", "FuncUint64(99)", func(x unsafe.Pointer) bool { return *(*uint64)(x) == 99 }),
+		Entry("float32", "FuncFloat32(99)", func(x unsafe.Pointer) bool { return *(*float32)(x) == 99 }),
+		Entry("float64", "FuncFloat64(99)", func(x unsafe.Pointer) bool { return *(*float64)(x) == 99 }),
+		Entry("string", `FuncString("99")`, func(x unsafe.Pointer) bool { return *(*string)(x) == "99" }),
+		Entry("boolean", `FuncBool(true)`, func(x unsafe.Pointer) bool { return *(*bool)(x) == true }),
 	)
 })

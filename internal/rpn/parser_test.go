@@ -96,6 +96,56 @@ var _ = Describe("Parser", func() {
 					})
 				})
 
+				Context("string used as argument", func() {
+					BeforeEach(func() {
+						expectedQuery = fmt.Sprintf(expectedQuery, `"some-string"`)
+					})
+
+					It("does not return an error", func() {
+						_, err := parser.Parse(expectedQuery)
+
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("returns 2 nodes", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result).To(HaveLen(2))
+					})
+
+					It("returns the value first", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result[0].ValueOk).To(BeTrue())
+						Expect(result[0].Name).To(Equal("some-string"))
+					})
+				})
+
+				Context("boolean used as argument", func() {
+					BeforeEach(func() {
+						expectedQuery = fmt.Sprintf(expectedQuery, "true")
+					})
+
+					It("does not return an error", func() {
+						_, err := parser.Parse(expectedQuery)
+
+						Expect(err).ToNot(HaveOccurred())
+					})
+
+					It("returns 2 nodes", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result).To(HaveLen(2))
+					})
+
+					It("returns the value first", func() {
+						result, _ := parser.Parse(expectedQuery)
+
+						Expect(result[0].ValueOk).To(BeTrue())
+						Expect(result[0].Name).To(Equal("true"))
+					})
+				})
+
 				DescribeTable("invalid syntax", func(query string) {
 					_, err := parser.Parse(query)
 
@@ -104,6 +154,8 @@ var _ = Describe("Parser", func() {
 					Entry("extra right parenthesis", "(99))"),
 					Entry("extra left parenthesis", "((99)"),
 					Entry("invalid function name", "9invalid(99)"),
+					Entry("use of ^", "FuncA(^99)"),
+					Entry(`non-matching '"'`, `FuncString("d)`),
 				)
 			})
 		})
@@ -111,7 +163,7 @@ var _ = Describe("Parser", func() {
 		Context("multiple arguments", func() {
 			Context("single function", func() {
 				BeforeEach(func() {
-					expectedQuery = "FuncA(99, 101)"
+					expectedQuery = "FuncA(99, -101)"
 				})
 
 				It("does not return an error", func() {
@@ -137,7 +189,7 @@ var _ = Describe("Parser", func() {
 					result, _ := parser.Parse(expectedQuery)
 
 					Expect(result[1].ValueOk).To(BeTrue())
-					Expect(result[1].Name).To(Equal("101"))
+					Expect(result[1].Name).To(Equal("-101"))
 				})
 
 				It("returns the func argument last", func() {

@@ -186,6 +186,52 @@ func (l *Linker) convertValue(node *indexedNode, inputType reflect.Type, values 
 		values[node.index] = &Value{
 			Value: unsafe.Pointer(&integer),
 		}
+	case reflect.Int32:
+		integer, _ := strconv.ParseInt(node.RawRpnNode.Name, 10, 32)
+		i32 := int32(integer)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&i32),
+		}
+	case reflect.Uint32:
+		integer, _ := strconv.ParseUint(node.RawRpnNode.Name, 10, 32)
+		u32 := uint32(integer)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&u32),
+		}
+	case reflect.Int64:
+		integer, _ := strconv.ParseInt(node.RawRpnNode.Name, 10, 64)
+		u64 := uint64(integer)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&u64),
+		}
+	case reflect.Uint64:
+		integer, _ := strconv.ParseUint(node.RawRpnNode.Name, 10, 64)
+		u64 := uint64(integer)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&u64),
+		}
+	case reflect.Float32:
+		float, _ := strconv.ParseFloat(node.RawRpnNode.Name, 32)
+		f32 := float32(float)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&f32),
+		}
+	case reflect.Float64:
+		float, _ := strconv.ParseFloat(node.RawRpnNode.Name, 64)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&float),
+		}
+	case reflect.String:
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&node.RawRpnNode.Name),
+		}
+	case reflect.Bool:
+		b, _ := strconv.ParseBool(node.RawRpnNode.Name)
+		values[node.index] = &Value{
+			Value: unsafe.Pointer(&b),
+		}
+	default:
+		panic(fmt.Sprintf("unsupported kind: %v", inputType.Kind()))
 	}
 
 	values[node.index].ValueOk = true

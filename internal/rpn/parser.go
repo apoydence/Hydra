@@ -11,12 +11,14 @@ var (
 	valueSplitter  *regexp.Regexp
 	variableRegexp *regexp.Regexp
 	funcRegexp     *regexp.Regexp
+	stringSanitize *regexp.Regexp
 )
 
 func init() {
 	valueSplitter = regexp.MustCompile(`[\(\)\,]`)
 	variableRegexp = regexp.MustCompile(`^\$[0-9]+$`)
-	funcRegexp = regexp.MustCompile(`^[A-Za-z]+$`)
+	funcRegexp = regexp.MustCompile(`^[A-Z][a-zA-Z0-9_]+$`)
+	stringSanitize = regexp.MustCompile(`".+"`)
 }
 
 type Parser struct {
@@ -32,6 +34,11 @@ func NewParser() *Parser {
 }
 
 func (p *Parser) Parse(query string) ([]RawRpnNode, error) {
+	query, santValues, err := p.sanitizeString(query)
+	if err != nil {
+		return nil, err
+	}
+
 	var nodes []RawRpnNode
 	opStack := NewStack()
 	tokens := p.split(query)
@@ -97,7 +104,51 @@ func (p *Parser) Parse(query string) ([]RawRpnNode, error) {
 		return nil, fmt.Errorf("misplaced %s", value)
 	}
 
-	return nodes, nil
+	return p.putStringsBack(nodes, santValues), nil
+}
+
+func (p *Parser) sanitizeString(query string) (string, []string, error) {
+	if index := strings.IndexAny(query, "^"); index >= 0 {
+		return "", nil, fmt.Errorf("Invalid character '^'")
+	}
+
+	var values []string
+	santQuery := stringSanitize.ReplaceAllStringFunc(query, func(value string) string {
+		values = append(values, p.stripQuotes(value))
+		return fmt.Sprintf("^%d", len(values)-1)
+	})
+
+	if strings.Index(santQuery, `"`) >= 0 {
+		return "", nil, fmt.Errorf(`Non-matching '"'`)
+	}
+
+	return santQuery, values, nil
+}
+
+func (p *Parser) stripQuotes(value string) string {
+	if len(value) < 2 {
+		return value
+	}
+
+	return value[1 : len(value)-1]
+}
+
+func (p *Parser) putStringsBack(nodes []RawRpnNode, values []string) []RawRpnNode {
+	for i, node := range nodes {
+		if !node.ValueOk || node.Name[0] != '^' {
+			continue
+		}
+
+		index, err := strconv.Atoi(node.Name[1:])
+		if err != nil || index >= len(values) {
+			panic(fmt.Sprintf("Unexpected index: %s", node.Name[1:]))
+		}
+		nodes[i] = RawRpnNode{
+			ValueOk: true,
+			Name:    values[index],
+		}
+	}
+	return nodes
 }
 
 func (p *Parser) popToLeftPar(opStack *Stack) ([]RawRpnNode, error) {
@@ -168,7 +219,16 @@ func (p *Parser) nextEquals(tokens []string, index int, value string) bool {
 }
 
 func (p *Parser) isValue(token string) bool {
-	_, err := strconv.ParseFloat(token, 64)
+	if token[0] == '^' {
+		return true
+	}
+
+	_, err := strconv.ParseBool(token)
+	if err == nil {
+		return true
+	}
+
+	_, err = strconv.ParseFloat(token, 64)
 	return err == nil || variableRegexp.MatchString(token)
 }
 
