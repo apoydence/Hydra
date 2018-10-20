@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/apoydence/hydra/internal/registrar"
-	"github.com/apoydence/hydra/internal/rpn"
+	"github.com/poy/hydra/internal/registrar"
+	"github.com/poy/hydra/internal/rpn"
 )
 
 type Hydra struct {

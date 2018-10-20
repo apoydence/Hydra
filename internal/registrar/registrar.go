@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"unsafe"
 
-	"github.com/apoydence/hydra/internal/rpn"
+	"github.com/poy/hydra/internal/rpn"
 )
 
 type Invoker func(function interface{}) func(args []unsafe.Pointer) []unsafe.Pointer

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/apoydence/hydra/internal/rpn"
+	"github.com/poy/hydra/internal/rpn"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

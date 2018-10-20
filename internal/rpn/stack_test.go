@@ -1,7 +1,7 @@
 package rpn_test
 
 import (
-	"github.com/apoydence/hydra/internal/rpn"
+	"github.com/poy/hydra/internal/rpn"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
